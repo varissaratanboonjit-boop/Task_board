@@ -345,6 +345,57 @@ function setupProjectControls() {
     populateProjects();
     renderActiveTab();
   });
+
+  // Delete Project Logic
+  const btnDeleteProj = document.getElementById('btn-delete-project');
+  if (btnDeleteProj) {
+    btnDeleteProj.addEventListener('click', () => {
+      if (projects.length <= 1) {
+        alert("ไม่สามารถลบโครงการได้เนื่องจากระบบจำเป็นต้องมีอย่างน้อย 1 โครงการ");
+        return;
+      }
+      
+      const activeP = projects.find(p => p.id === activeProjectId);
+      const pName = activeP ? activeP.name : 'โครงการปัจจุบัน';
+      
+      if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ "${pName}"?\n\nการลบนี้จะล้างข้อมูล Epics, Sprints, การ์ดงาน และคอมเม้นต์ทั้งหมดในโครงการนี้ทิ้งอย่างถาวร!`)) {
+        // Remove from projects list
+        projects = projects.filter(p => p.id !== activeProjectId);
+        localStorage.setItem('jira_projects', JSON.stringify(projects));
+        
+        // Clean up child data in database (localStorage)
+        const allEpics = JSON.parse(localStorage.getItem('jira_epics') || '[]').filter(e => e.projectId !== activeProjectId);
+        localStorage.setItem('jira_epics', JSON.stringify(allEpics));
+        
+        const allSprints = JSON.parse(localStorage.getItem('jira_sprints') || '[]').filter(s => s.projectId !== activeProjectId);
+        localStorage.setItem('jira_sprints', JSON.stringify(allSprints));
+        
+        // Get all issue IDs for this project to delete comments
+        const projectIssues = JSON.parse(localStorage.getItem('jira_issues') || '[]').filter(i => i.projectId === activeProjectId);
+        const issueIds = projectIssues.map(i => i.id);
+        
+        const allIssues = JSON.parse(localStorage.getItem('jira_issues') || '[]').filter(i => i.projectId !== activeProjectId);
+        localStorage.setItem('jira_issues', JSON.stringify(allIssues));
+        
+        const allComments = JSON.parse(localStorage.getItem('jira_comments') || '{}');
+        issueIds.forEach(id => {
+          delete allComments[id];
+        });
+        localStorage.setItem('jira_comments', JSON.stringify(allComments));
+        
+        // Select the first remaining project as active
+        activeProjectId = projects[0].id;
+        localStorage.setItem('jira_active_project_id', activeProjectId);
+        
+        alert(`ลบโครงการ "${pName}" สำเร็จ!`);
+        
+        // Reload and render
+        loadAllState();
+        populateProjects();
+        renderActiveTab();
+      }
+    });
+  }
 }
 
 // Settings backups exports/imports
