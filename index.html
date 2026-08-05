@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quantum Jira-like Dashboard Manager</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="app-sidebar">
+      <div class="sidebar-header">
+        <div class="project-brand">
+          <div class="brand-icon">
+            <i data-lucide="layers" style="color: #fff; width: 22px; height: 22px;"></i>
+          </div>
+          <div>
+            <h2>Quantum Jira</h2>
+            <p class="subtitle">Dashboard Manager</p>
+          </div>
+        </div>
+        
+        <!-- Project Selector inside Sidebar -->
+        <div class="sidebar-project-select">
+          <label for="project-selector"><i data-lucide="folder-kanban"></i> โครงการ:</label>
+          <div style="display:flex; gap:0.3rem; margin-top:0.3rem;">
+            <select id="project-selector" style="flex:1;">
+              <!-- Dynamically populated -->
+            </select>
+            <button class="btn btn-secondary btn-icon" id="btn-create-project" title="สร้างโครงการใหม่" style="padding:0.4rem;">
+              <i data-lucide="plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="sidebar-nav">
+        <button class="nav-item active" id="tab-roadmap">
+          <i data-lucide="calendar-range"></i>
+          <span>🗓️ Roadmap (ไทม์ไลน์)</span>
+        </button>
+        <button class="nav-item" id="tab-backlog">
+          <i data-lucide="list-todo"></i>
+          <span>🗂️ Backlog (แผนงาน)</span>
+        </button>
+        <button class="nav-item" id="tab-board">
+          <i data-lucide="kanban"></i>
+          <span>📋 Active Board (คัมบัง)</span>
+        </button>
+        <button class="nav-item" id="tab-dashboard">
+          <i data-lucide="pie-chart"></i>
+          <span>📊 Dashboard (สรุปผล)</span>
+        </button>
+        <button class="nav-item" id="tab-settings">
+          <i data-lucide="settings"></i>
+          <span>⚙️ Settings (สำรองข้อมูล)</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer (E2E Test Trigger) -->
+      <div class="sidebar-footer">
+        <button class="btn btn-secondary btn-test-suite" id="btn-open-tests" style="width:100%; font-size:0.75rem; padding:0.5rem 0.7rem;">
+          <i data-lucide="play-circle"></i>
+          <span>รันการทดสอบอัตโนมัติ (E2E)</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN VIEW AREA -->
+    <main class="app-main">
+      
+      <!-- Top Action Bar -->
+      <header class="main-header">
+        <div class="breadcrumbs">
+          <span id="breadcrumb-project">โครงการปัจจุบัน</span>
+          <span class="divider">/</span>
+          <span id="breadcrumb-view" style="color: #fff; font-weight:600;">Roadmap</span>
+        </div>
+        
+        <div class="header-actions">
+          <div class="quick-filters" id="board-quick-filters" style="display:none;">
+            <button class="btn btn-secondary btn-sm" id="filter-my-issues">งานของฉัน</button>
+            <button class="btn btn-secondary btn-sm" id="filter-bugs">เฉพาะ Bug</button>
+            <button class="btn btn-secondary btn-sm" id="filter-clear">ล้างตัวกรอง</button>
+          </div>
+          <button class="btn btn-primary" id="btn-create-issue">
+            <i data-lucide="plus"></i>
+            <span>สร้างการ์ดงาน (Create)</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- VIEW 1: ROADMAP (Gantt-like Timeline) -->
+      <section id="view-roadmap" class="tab-view active">
+        <div class="view-intro">
+          <h3>🗓️ แผนงานโครงการโครงการ (Timeline Roadmap)</h3>
+          <p>แสดงการจัดสัดส่วนเวลาการทำงานของ Epics และ Sprints ตามวันที่เริ่มงาน (Start Date) และสิ้นสุดงาน (End Date)</p>
+        </div>
+
+        <div class="roadmap-container">
+          <div class="roadmap-timeline-header" id="roadmap-timeline-header-months">
+            <!-- Dynamic Month headers (e.g. Jul, Aug, Sep) -->
+          </div>
+          <div class="roadmap-rows" id="roadmap-rows-container">
+            <!-- Dynamic Roadmap rows -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: BACKLOG (Sprint & Epic Planner) -->
+      <section id="view-backlog" class="tab-view">
+        <div class="backlog-layout">
+          
+          <!-- Left Panel: Epics Filter Column -->
+          <div class="backlog-epics-panel">
+            <div class="panel-header">
+              <h4>Epics (หัวข้อหลัก)</h4>
+              <button class="btn btn-secondary btn-icon-sm" id="btn-create-epic" title="สร้าง Epic ใหม่">
+                <i data-lucide="plus" style="width:14px; height:14px;"></i>
+              </button>
+            </div>
+            <div class="epic-list" id="backlog-epics-list">
+              <!-- Epic filter items dynamically injected -->
+            </div>
+          </div>
+          
+          <!-- Right Panel: Sprints & Backlog lists -->
+          <div class="backlog-sprints-panel">
+            <div class="view-intro">
+              <h3>🗂️ การวางแผนสปินต์ (Sprint Planning & Backlog)</h3>
+              <p>ลากวางการ์ดงานระหว่าง Backlog และ Sprint ต่างๆ เพื่อจัดแผนงานในรอบการทำงานนั้นๆ</p>
+            </div>
+
+            <!-- Active Sprint Section -->
+            <div class="sprint-container active-sprint-container" id="sprint-active-box">
+              <div class="sprint-header">
+                <div class="sprint-title-info">
+                  <i data-lucide="chevron-right" class="toggle-icon"></i>
+                  <strong id="active-sprint-name">Sprint 1 (Active)</strong>
+                  <span class="sprint-date-badge" id="active-sprint-date-label">Start - End Date</span>
+                  <span class="badge-count" id="active-sprint-sp-count">0 SP</span>
+                </div>
+                <div class="sprint-actions">
+                  <button class="btn btn-secondary btn-sm" id="btn-edit-sprint-active" title="แก้ไขระยะเวลาสปินต์">
+                    <i data-lucide="calendar"></i> ตั้งค่าวันสปินต์
+                  </button>
+                  <button class="btn btn-primary btn-sm btn-complete-sprint" id="btn-complete-sprint" style="background:linear-gradient(135deg, #10b981, #059669);">ปิดสปินต์ (Complete)</button>
+                </div>
+              </div>
+              <div class="sprint-drag-area" id="active-sprint-drag-area" data-sprint-id="active-sprint">
+                <!-- Cards list in active sprint -->
+              </div>
+            </div>
+
+            <!-- Future Sprints Area -->
+            <div id="future-sprints-area">
+              <!-- Future sprints dynamically created here -->
+            </div>
+
+            <div style="margin: 1rem 0; display:flex; gap:0.5rem;">
+              <button class="btn btn-secondary btn-sm" id="btn-create-sprint">
+                <i data-lucide="plus"></i> สร้างสปินต์ใหม่ (Create Sprint)
+              </button>
+            </div>
+
+            <!-- Backlog Section -->
+            <div class="sprint-container backlog-container" id="sprint-backlog-box">
+              <div class="sprint-header">
+                <div class="sprint-title-info">
+                  <i data-lucide="chevron-right" class="toggle-icon"></i>
+                  <strong>Backlog (รายการงานกองสะสม)</strong>
+                  <span class="badge-count" id="backlog-sp-count">0 SP</span>
+                </div>
+              </div>
+              <div class="sprint-drag-area" id="backlog-drag-area" data-sprint-id="backlog">
+                <!-- Cards list in backlog -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: ACTIVE BOARD (Scrum/Kanban columns) -->
+      <section id="view-board" class="tab-view">
+        <div class="board-sub-header">
+          <div class="board-info">
+            <h3 id="active-board-sprint-title">Active Board: Sprint 1</h3>
+            <p class="subtitle" id="active-board-sprint-dates">วันที่เริ่ม - สิ้นสุดสปินต์</p>
+          </div>
+        </div>
+
+        <div class="board-columns-grid">
+          <!-- Column: To Do -->
+          <div class="board-column" data-status="To Do">
+            <div class="column-header">
+              <div class="column-title-group">
+                <span class="column-dot todo"></span>
+                <span>TO DO</span>
+              </div>
+              <span class="task-count" id="count-todo">0</span>
+            </div>
+            <div class="board-cards-container" id="board-todo-container" data-status="To Do">
+              <!-- Drag and drop cards -->
+            </div>
+          </div>
+
+          <!-- Column: In Progress -->
+          <div class="board-column" data-status="In Progress">
+            <div class="column-header">
+              <div class="column-title-group">
+                <span class="column-dot in-progress"></span>
+                <span>IN PROGRESS</span>
+              </div>
+              <span class="task-count" id="count-inprogress">0</span>
+            </div>
+            <div class="board-cards-container" id="board-inprogress-container" data-status="In Progress">
+              <!-- Drag and drop cards -->
+            </div>
+          </div>
+
+          <!-- Column: In Review -->
+          <div class="board-column" data-status="In Review">
+            <div class="column-header">
+              <div class="column-title-group">
+                <span class="column-dot review"></span>
+                <span>IN REVIEW</span>
+              </div>
+              <span class="task-count" id="count-review">0</span>
+            </div>
+            <div class="board-cards-container" id="board-review-container" data-status="In Review">
+              <!-- Drag and drop cards -->
+            </div>
+          </div>
+
+          <!-- Column: Done -->
+          <div class="board-column" data-status="Done">
+            <div class="column-header">
+              <div class="column-title-group">
+                <span class="column-dot completed"></span>
+                <span>DONE</span>
+              </div>
+              <span class="task-count" id="count-done">0</span>
+            </div>
+            <div class="board-cards-container" id="board-done-container" data-status="Done">
+              <!-- Drag and drop cards -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: DASHBOARD (Jira-like Widgets / Charts) -->
+      <section id="view-dashboard" class="tab-view">
+        <div class="view-intro">
+          <h3>📊 แดชบอร์ดสรุปประสิทธิภาพโครงการ (Jira Dashboard Manager)</h3>
+          <p>สรุปคะแนน Story Points, แผนภูมิสะสมความคืบหน้า และความคล่องตัวของสมาชิกร่วมกันในสปินต์</p>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Widget 1: Sprint Burndown Chart -->
+          <div class="db-widget-card" style="grid-column: span 2;">
+            <div class="widget-header">
+              <h5>กราฟเบิร์นดาวน์ (Sprint Burndown Chart)</h5>
+              <span class="subtitle">Story Points ที่เหลือเปรียบเทียบกับความเร่งเชิงอุดมคติ</span>
+            </div>
+            <div class="widget-chart-area">
+              <svg id="burndown-svg-chart" viewBox="0 0 600 240" preserveAspectRatio="none">
+                <!-- SVG lines drawn dynamically -->
+              </svg>
+            </div>
+            <div class="graph-legend" style="margin-top:0.5rem;">
+              <span class="legend-item"><span class="legend-dot pass-dot" style="background:#ef4444; box-shadow:0 0 5px #ef4444;"></span> Remaining Story Points (เส้นวัดจริง)</span>
+              <span class="legend-item"><span class="legend-dot done-dot" style="background:#64748b; box-shadow:0 0 5px #64748b;"></span> Ideal Burn Line (เส้นอุดมคติ)</span>
+            </div>
+          </div>
+
+          <!-- Widget 2: Issue Status Pie Chart -->
+          <div class="db-widget-card">
+            <div class="widget-header">
+              <h5>สัดส่วนตามสถานะการ์ดงาน (Issue Status Breakdown)</h5>
+            </div>
+            <div class="widget-chart-area" style="display:flex; justify-content:center; align-items:center; height:180px;">
+              <div class="donut-chart-wrapper" id="status-donut-chart">
+                <!-- SVG pie chart or CSS gradients -->
+              </div>
+            </div>
+            <div class="status-donut-legend" id="status-donut-legend-list">
+              <!-- Dynamic status legend list -->
+            </div>
+          </div>
+
+          <!-- Widget 3: Assignee Workload Allocation -->
+          <div class="db-widget-card" style="grid-column: span 2;">
+            <div class="widget-header">
+              <h5>ปริมาณงานแยกตามสมาชิก (Assignee Workload - Story Points)</h5>
+            </div>
+            <div class="workload-bars-list" id="workload-bars-container" style="display:flex; flex-direction:column; gap:0.8rem; margin-top:1rem;">
+              <!-- Dynamic horizontal workload bars -->
+            </div>
+          </div>
+
+          <!-- Widget 4: Sprint Velocity History -->
+          <div class="db-widget-card">
+            <div class="widget-header">
+              <h5>ประวัติความเร็วงานของทีม (Sprint Velocity History)</h5>
+            </div>
+            <div class="velocity-list" id="velocity-list-container" style="display:flex; flex-direction:column; gap:0.6rem; margin-top:1rem;">
+              <!-- Dynamic velocity bars showing completed vs committed SP -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 5: SETTINGS & DATA BACKUPS -->
+      <section id="view-settings" class="tab-view">
+        <div class="view-intro">
+          <h3>⚙️ ตัวจัดการโครงการและสแนปช็อตข้อมูลสำรอง (Project & Data Backup Manager)</h3>
+          <p>จัดการส่งออกและนำเข้าข้อมูลโครงการทั้งหมดเพื่อให้สามารถแชร์หรือทำงานต่อร่วมกับสมาชิกร่วมทีมคนอื่นได้ทันที</p>
+        </div>
+
+        <div class="settings-grid">
+          
+          <!-- Database Backup Card -->
+          <div class="settings-card">
+            <div class="card-header">
+              <i data-lucide="database" style="color: #3b82f6; width: 22px; height: 22px;"></i>
+              <h4>สำรองและกู้คืนระบบฐานข้อมูลโครงการ (Backup & Restore)</h4>
+            </div>
+            <p class="subtitle" style="margin-top:0.4rem; margin-bottom:1rem;">คุณสามารถบันทึกข้อมูล Epics, Sprints, การ์ดงาน และคอมเม้นต์ทั้งหมดในโปรเจกต์ออกเป็นไฟล์ JSON เพื่อเอาไปใช้เปิดทำต่อบนเครื่องอื่นได้</p>
+            
+            <div class="settings-actions-group">
+              <button class="btn btn-primary" id="btn-export-db-json-full">
+                <i data-lucide="download-cloud"></i>
+                <span>ส่งออกข้อมูลสำรองระบบ (JSON Backup)</span>
+              </button>
+              <button class="btn btn-secondary" id="btn-import-db-json-full">
+                <i data-lucide="upload-cloud"></i>
+                <span>นำเข้าข้อมูลสำรองระบบ (JSON Restore)</span>
+              </button>
+              <input type="file" id="db-json-file-input-full" style="display: none;" accept=".json">
+            </div>
+          </div>
+
+          <!-- CSV Export Card -->
+          <div class="settings-card">
+            <div class="card-header">
+              <i data-lucide="file-spreadsheet" style="color: #10b981; width: 22px; height: 22px;"></i>
+              <h4>ส่งออกข้อมูลสเปรดชีต (CSV Export)</h4>
+            </div>
+            <p class="subtitle" style="margin-top:0.4rem; margin-bottom:1rem;">ดาวน์โหลดรายการการ์ดงานและสรุปความคืบหน้าของโครงการออกมาเป็นไฟล์สเปรดชีต CSV เพื่อไปเปิดใช้ตรวจสอบกับ Excel ต่อไป</p>
+            
+            <div class="settings-actions-group">
+              <button class="btn btn-secondary" id="btn-export-tasks-csv">
+                <i data-lucide="download"></i>
+                <span>ส่งออกตารางงานทั้งหมด (Tasks CSV)</span>
+              </button>
+              <button class="btn btn-secondary" id="btn-export-sprints-csv">
+                <i data-lucide="download"></i>
+                <span>ส่งออกสถิติ Sprints (Sprints CSV)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Reset Database Card -->
+          <div class="settings-card danger-card">
+            <div class="card-header">
+              <i data-lucide="alert-triangle" style="color: #ef4444; width: 22px; height: 22px;"></i>
+              <h4>ล้างข้อมูลและเริ่มต้นระบบจำลองใหม่ (Reset Local Database)</h4>
+            </div>
+            <p class="subtitle" style="margin-top:0.4rem; margin-bottom:1rem;">กู้คืนระบบกลับไปใช้ฐานข้อมูลจำลอง (Mock Data) ดั้งเดิมของโปรแกรม หรือล้างค่าว่างเพื่อเริ่มต้นใช้งานโปรเจกต์ใหม่</p>
+            
+            <div class="settings-actions-group">
+              <button class="btn btn-defect" id="btn-reset-to-mock" style="background:#ea580c; border:none;">
+                <i data-lucide="refresh-cw"></i>
+                <span>ล้างและโหลดข้อมูลทดสอบเริ่มต้น (Mock Data)</span>
+              </button>
+              <button class="btn btn-defect" id="btn-reset-to-empty" style="background:#ef4444; border:none;">
+                <i data-lucide="trash-2"></i>
+                <span>ล้างค่าว่างทั้งหมดในระบบ (Clear Database)</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: CREATE/EDIT PROJECT -->
+  <div class="modal-overlay" id="project-modal">
+    <div class="modal-content glassmorphism">
+      <div class="modal-header">
+        <h3>สร้างโครงการใหม่ (Create New Project)</h3>
+        <button class="close-btn" id="btn-close-project-modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="project-form" novalidate>
+        <div class="form-group">
+          <label for="project-name-input">ชื่อโครงการ (Project Name) *</label>
+          <input type="text" id="project-name-input" placeholder="กรุณากรอกชื่อโครงการใหม่..." required autocomplete="off">
+          <span class="error-msg" id="error-project-name">กรุณาระบุชื่อโครงการ</span>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-project-modal">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">สร้างโครงการ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT SPRINT DATES -->
+  <div class="modal-overlay" id="sprint-date-modal">
+    <div class="modal-content glassmorphism">
+      <div class="modal-header">
+        <h3 id="sprint-modal-title">ตั้งค่าระยะเวลารอบการทำงาน (Sprint Details)</h3>
+        <button class="close-btn" id="btn-close-sprint-modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="sprint-date-form" novalidate>
+        <input type="hidden" id="sprint-id-hidden">
+        <div class="form-group">
+          <label for="sprint-name-input">ชื่อสปินต์ (Sprint Name) *</label>
+          <input type="text" id="sprint-name-input" required autocomplete="off">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="sprint-start-date">วันเริ่มงาน (Start Date) *</label>
+            <input type="date" id="sprint-start-date" required>
+          </div>
+          <div class="form-group">
+            <label for="sprint-end-date">วันสิ้นสุดงาน (End Date) *</label>
+            <input type="date" id="sprint-end-date" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-sprint-modal">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกข้อมูลสปินต์</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CREATE/EDIT ISSUE CARD -->
+  <div class="modal-overlay" id="issue-modal">
+    <div class="modal-content glassmorphism" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 id="issue-modal-title">สร้างการ์ดงานใหม่ (Create Issue Card)</h3>
+        <button class="close-btn" id="btn-close-issue-modal">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <form id="issue-form" novalidate>
+        <input type="hidden" id="issue-id-hidden">
+        
+        <div class="form-group">
+          <label for="issue-title-input">หัวข้องาน (Summary) *</label>
+          <input type="text" id="issue-title-input" placeholder="สิ่งที่ต้องปฏิบัติ..." required autocomplete="off">
+          <span class="error-msg">กรุณาระบุหัวข้องาน</span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="issue-type-input">ประเภทงาน (Issue Type)</label>
+            <select id="issue-type-input">
+              <option value="Story" selected>Story</option>
+              <option value="Task">Task</option>
+              <option value="Bug">Bug</option>
+              <option value="Epic">Epic</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="issue-priority-input">Priority</label>
+            <select id="issue-priority-input">
+              <option value="Highest">Highest</option>
+              <option value="High" selected>High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+              <option value="Lowest">Lowest</option>
+            </select>
+          </div>
+          <div class="form-group" id="issue-sp-group">
+            <label for="issue-sp-input">Story Points</label>
+            <input type="number" id="issue-sp-input" value="1" min="0" max="100">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="issue-start-date-input">วันเริ่มงาน (Start Date) *</label>
+            <input type="date" id="issue-start-date-input" required>
+            <span class="error-msg">กรุณาระบุวันเริ่มงาน</span>
+          </div>
+          <div class="form-group">
+            <label for="issue-end-date-input">End Date *</label>
+            <input type="date" id="issue-end-date-input" required>
+            <span class="error-msg">กรุณาระบุวันสิ้นสุดงาน</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="issue-assignee-input">ชื่อผู้รับผิดชอบ (Assignee) *</label>
+            <input type="text" id="issue-assignee-input" placeholder="ระบุชื่อผู้รับผิดชอบ..." required autocomplete="off">
+            <span class="error-msg">กรุณาระบุผู้รับผิดชอบ</span>
+          </div>
+          <div class="form-group" id="issue-epic-group">
+            <label for="issue-epic-select">Epic Link</label>
+            <select id="issue-epic-select">
+              <!-- Dynamically populated Epics list -->
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="issue-detail-input">รายละเอียดงาน (Detail) *</label>
+          <textarea id="issue-detail-input" rows="3" placeholder="ระบุรายละเอียดรายละเอียดงาน..." required></textarea>
+          <span class="error-msg">กรุณาระบุรายละเอียดงาน</span>
+        </div>
+
+        <div class="form-group">
+          <label for="issue-remark-input">หมายเหตุ (Remark)</label>
+          <input type="text" id="issue-remark-input" placeholder="ระบุหมายเหตุเพิ่มเติม..." autocomplete="off">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-issue-modal">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-issue">บันทึกข้อมูล</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JIRA-LIKE ISSUE DETAILS SLIDE DRAWER (Right Sidebar) -->
+  <div class="modal-overlay" id="defect-drawer-overlay">
+    <div class="modal-content glassmorphism" style="max-width: 680px; margin-right: 0; margin-top:0; margin-bottom:0; height:100vh; border-radius: 20px 0 0 20px; display:flex; flex-direction:column; position: fixed; right: -680px; transition: right 0.3s ease-out;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span id="drawer-issue-key" style="font-weight:700; color: #3b82f6; font-size:1.1rem;">PROJ-001</span>
+          <span id="drawer-issue-type-badge" class="badge-status">Story</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <button class="close-btn" id="btn-close-defect-drawer">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Scrollable Drawer Body -->
+      <div class="drawer-scroll-body" style="flex:1; overflow-y:auto; padding-right:0.5rem; display:flex; flex-direction:column; gap:1.2rem;">
+        
+        <div style="display:grid; grid-template-columns: 1.2fr 0.8fr; gap:1rem;">
+          
+          <!-- Left Main Area (Title, Detail, Sub-tasks) -->
+          <div style="display:flex; flex-direction:column; gap:1.2rem;">
+            
+            <!-- Issue Title -->
+            <div class="form-group">
+              <label for="drawer-title-field">หัวข้องาน (Summary)</label>
+              <input type="text" id="drawer-title-field" class="drawer-editable-field" style="font-size:1.05rem; font-weight:700; background:transparent; border:1px solid transparent; padding:0.2rem 0.4rem; border-radius:4px;">
+            </div>
+
+            <!-- Detail / Description -->
+            <div class="form-group">
+              <label for="drawer-detail-field">รายละเอียดงาน (Detail)</label>
+              <textarea id="drawer-detail-field" class="drawer-editable-field" rows="4" style="background:rgba(0,0,0,0.15); border:1px solid var(--glass-border); padding:0.5rem; border-radius:8px; font-size:0.85rem; line-height:1.5;"></textarea>
+            </div>
+
+            <!-- Remark -->
+            <div class="form-group">
+              <label for="drawer-remark-field">หมายเหตุ (Remark)</label>
+              <input type="text" id="drawer-remark-field" class="drawer-editable-field" style="background:rgba(0,0,0,0.15); border:1px solid var(--glass-border); padding:0.4rem; border-radius:8px; font-size:0.82rem;">
+            </div>
+
+            <!-- Sub-tasks Checklist -->
+            <div class="subtasks-section" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top:0.8rem;">
+              <h4 style="font-size:0.85rem; display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                <span>Sub-tasks (งานย่อย Checklist)</span>
+                <button class="btn btn-secondary btn-icon-sm" id="btn-add-subtask" style="padding:0.2rem 0.4rem; font-size:0.7rem;"><i data-lucide="plus" style="width:12px; height:12px;"></i> เพิ่มงานย่อย</button>
+              </h4>
+              <div class="subtasks-container" id="drawer-subtasks-list" style="display:flex; flex-direction:column; gap:0.4rem;">
+                <!-- Dynamic Checklist list -->
+              </div>
+            </div>
+            
+          </div>
+
+          <!-- Right Details Column (Meta Data) -->
+          <div style="background:rgba(15,23,42,0.35); border:1px solid var(--glass-border); border-radius:12px; padding:0.8rem; display:flex; flex-direction:column; gap:0.8rem; height:fit-content;">
+            
+            <div class="form-group">
+              <label>สถานะการทำงาน (Status)</label>
+              <select id="drawer-status-select" style="margin-top:0.25rem;">
+                <option value="To Do">To Do</option>
+                <option value="In Progress">In Progress</option>
+                <option value="In Review">In Review</option>
+                <option value="Done">Done</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>ชื่อผู้รับผิดชอบ (Assignee)</label>
+              <input type="text" id="drawer-assignee-field" style="margin-top:0.25rem;">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>วันเริ่มงาน (Start Date)</label>
+                <input type="date" id="drawer-start-date-field" style="margin-top:0.25rem; font-size:0.75rem;">
+              </div>
+              <div class="form-group">
+                <label>End Date</label>
+                <input type="date" id="drawer-end-date-field" style="margin-top:0.25rem; font-size:0.75rem;">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Priority</label>
+                <select id="drawer-priority-select" style="margin-top:0.25rem;">
+                  <option value="Highest">Highest</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                  <option value="Lowest">Lowest</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Story Points</label>
+                <input type="number" id="drawer-sp-field" min="0" style="margin-top:0.25rem;">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Epic Link</label>
+              <select id="drawer-epic-select" style="margin-top:0.25rem;">
+                <!-- Epic list -->
+              </select>
+            </div>
+
+            <div style="font-size:0.7rem; color:var(--color-text-muted); border-top:1px solid rgba(255,255,255,0.05); padding-top:0.5rem; display:flex; flex-direction:column; gap:0.2rem;">
+              <span>Reporter: <strong id="drawer-reporter-label" style="color:#fff;">QA Reporter</strong></span>
+              <span>วันที่แจ้งเปิด: <strong id="drawer-created-date-label" style="color:#fff;">2026-07-22</strong></span>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- QA Discussion Comments Section -->
+        <div class="comments-section-wrapper" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top:1rem;">
+          <h4 style="font-size:0.85rem; margin-bottom:0.5rem; display:flex; align-items:center; gap:0.4rem;">
+            <i data-lucide="message-square" style="width:15px; height:15px;"></i> ห้องถามตอบสำหรับผู้ร่วมทีม (Discussion Logs)
+          </h4>
+          
+          <!-- Chats Area -->
+          <div class="chat-logs-area" id="drawer-comments-container">
+            <!-- Dynamic comments logs -->
+          </div>
+
+          <!-- Add Comment Form -->
+          <form id="comment-add-form" style="margin-top: 0.8rem; display:flex; flex-direction:column; gap:0.5rem;">
+            <div style="display:flex; gap:0.4rem;">
+              <input type="text" id="comment-author-input" placeholder="ชื่อผู้แสดงความเห็น..." required style="flex:1; padding:0.45rem 0.6rem; font-size:0.75rem;" value="QA Tester">
+              <input type="text" id="comment-text-input" placeholder="พิมพ์ความคิดเห็นของคุณที่นี่..." required style="flex:3; padding:0.45rem 0.6rem; font-size:0.75rem;">
+              <button type="submit" class="btn btn-primary" style="padding:0.45rem 0.8rem; font-size:0.75rem;">ส่งแชท</button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+      <div class="modal-footer" style="padding: 0.6rem 0; margin-top:0.5rem;">
+        <button class="btn btn-primary" id="btn-save-drawer-changes">บันทึกข้อมูลลิ้นชัก</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INLINE AUTOMATION RUNNER DRAWER PANEL (For CORS bypass on file://) -->
+  <div id="automation-runner-panel" class="glassmorphism">
+    <div class="runner-header">
+      <div class="logo-area" style="display:flex; align-items:center; gap:0.5rem;">
+        <i data-lucide="play-circle" style="color: #a855f7; width:22px; height:22px;"></i>
+        <h4 style="font-size:0.95rem; font-weight:700; color:#fff;">E2E Automation Runner</h4>
+      </div>
+      <button class="close-btn" id="btn-close-runner">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    
+    <!-- Metrics -->
+    <div class="runner-metrics">
+      <div class="metric"><span class="val" id="run-total">6</span><span class="lbl">เทสทั้งหมด</span></div>
+      <div class="metric pass"><span class="val" style="color: var(--color-completed);" id="run-passed">0</span><span class="lbl">ผ่าน</span></div>
+      <div class="metric fail"><span class="val" style="color: var(--color-high);" id="run-failed">0</span><span class="lbl">ล้มเหลว</span></div>
+    </div>
+    
+    <div class="runner-controls-row">
+      <button class="btn btn-primary btn-run" id="btn-start-automation" style="flex:1;">เริ่มรันสคริปต์ทดสอบ</button>
+      <select class="table-select" id="select-run-speed" style="width: 120px;">
+        <option value="1200">ช้า (1.2s)</option>
+        <option value="600" selected>ปกติ (0.6s)</option>
+        <option value="150">เร็ว (0.15s)</option>
+      </select>
+    </div>
+
+    <!-- Test Cases Checklist -->
+    <div class="runner-tests-list">
+      <div class="run-test-item" id="run-step-1">
+        <span class="test-title">1. สร้างโครงการและ Epic บน Roadmap</span>
+        <span class="badge-status pending" id="run-status-1">Pending</span>
+      </div>
+      <div class="run-test-item" id="run-step-2">
+        <span class="test-title">2. สร้างสปินต์และวางแผนงานใน Backlog</span>
+        <span class="badge-status pending" id="run-status-2">Pending</span>
+      </div>
+      <div class="run-test-item" id="run-step-3">
+        <span class="test-title">3. ลากย้ายและอัปเดตกระดานคัมบัง</span>
+        <span class="badge-status pending" id="run-status-3">Pending</span>
+      </div>
+      <div class="run-test-item" id="run-step-4">
+        <span class="test-title">4. แก้ไขรายละเอียดฟิลด์ผ่าน Drawer</span>
+        <span class="badge-status pending" id="run-status-4">Pending</span>
+      </div>
+      <div class="run-test-item" id="run-step-5">
+        <span class="test-title">5. โพสต์ความคิดเห็นถามตอบในทีม</span>
+        <span class="badge-status pending" id="run-status-5">Pending</span>
+      </div>
+      <div class="run-test-item" id="run-step-6">
+        <span class="test-title">6. คำนวณเบิร์นดาวน์ & แดชบอร์ดสรุป</span>
+        <span class="badge-status pending" id="run-status-6">Pending</span>
+      </div>
+    </div>
+
+    <!-- Console Logs -->
+    <div class="runner-console">
+      <div class="console-title">CONSOLE LOGS (สเต็ปตรวจสอบ) <span id="run-timestamp" style="font-family:monospace; color:#a855f7;">idle</span></div>
+      <div class="console-logs-box" id="run-console-box">
+        <div class="log-line info">
+          <span class="log-time">[System]</span>
+          <span class="log-msg">ระบบสคริปต์อัตโนมัติคัมบัง Jira พร้อมเริ่มทำงาน...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="test_runner.js"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>
