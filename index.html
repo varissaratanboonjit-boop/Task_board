@@ -59,6 +59,10 @@
           <i data-lucide="kanban"></i>
           <span>📋 Active Board (คัมบัง)</span>
         </button>
+        <button class="nav-item" id="tab-summary">
+          <i data-lucide="file-spreadsheet"></i>
+          <span>📈 Test Summary (สรุปโครงการ)</span>
+        </button>
         <button class="nav-item" id="tab-dashboard">
           <i data-lucide="pie-chart"></i>
           <span>📊 Dashboard (สรุปผล)</span>
@@ -90,9 +94,14 @@
         </div>
         
         <div class="header-actions">
-          <div class="quick-filters" id="board-quick-filters" style="display:none;">
+          <div class="quick-filters" id="board-quick-filters" style="display:none; gap:0.4rem; align-items:center;">
+            <button class="btn btn-secondary btn-sm" id="filter-blockers" style="background:rgba(239, 68, 68, 0.2); border:1px solid #ef4444; color:#fca5a5;">🔴 Blockers</button>
+            <button class="btn btn-secondary btn-sm" id="filter-ready-qa" style="background:rgba(245, 158, 11, 0.2); border:1px solid #f59e0b; color:#fde68a;">🟡 Ready for QA</button>
             <button class="btn btn-secondary btn-sm" id="filter-my-issues">งานของฉัน</button>
-            <button class="btn btn-secondary btn-sm" id="filter-bugs">เฉพาะ Bug</button>
+            <button class="btn btn-secondary btn-sm" id="filter-due-soon">📅 งานใกล้กำหนด</button>
+            <select id="filter-tester-select" class="btn btn-secondary btn-sm" style="width:auto; padding: 0.25rem 0.5rem; height: 31px; background:#fff; color:#172b4d; border:1px solid #dfe1e6;">
+              <option value="">👤 Tester ทั้งหมด</option>
+            </select>
             <button class="btn btn-secondary btn-sm" id="filter-clear">ล้างตัวกรอง</button>
           </div>
           <button class="btn btn-primary" id="btn-create-issue">
@@ -202,13 +211,13 @@
           </div>
         </div>
 
-        <div class="board-columns-grid">
-          <!-- Column: To Do -->
+        <div class="board-columns-grid" style="grid-template-columns: repeat(5, 1fr);">
+          <!-- Column: Backlog / Plan -->
           <div class="board-column" data-status="To Do">
             <div class="column-header">
               <div class="column-title-group">
                 <span class="column-dot todo"></span>
-                <span>TO DO</span>
+                <span>📋 BACKLOG / PLAN</span>
               </div>
               <span class="task-count" id="count-todo">0</span>
             </div>
@@ -222,7 +231,7 @@
             <div class="column-header">
               <div class="column-title-group">
                 <span class="column-dot in-progress"></span>
-                <span>IN PROGRESS</span>
+                <span>⏳ IN PROGRESS</span>
               </div>
               <span class="task-count" id="count-inprogress">0</span>
             </div>
@@ -231,12 +240,26 @@
             </div>
           </div>
 
-          <!-- Column: In Review -->
+          <!-- Column: Blocked / Waiting -->
+          <div class="board-column" data-status="Blocked">
+            <div class="column-header">
+              <div class="column-title-group">
+                <span class="column-dot review" style="background:#ef4444;"></span>
+                <span>🚧 BLOCKED / WAITING</span>
+              </div>
+              <span class="task-count" id="count-blocked">0</span>
+            </div>
+            <div class="board-cards-container" id="board-blocked-container" data-status="Blocked">
+              <!-- Drag and drop cards -->
+            </div>
+          </div>
+
+          <!-- Column: In Review / Lead Verify -->
           <div class="board-column" data-status="In Review">
             <div class="column-header">
               <div class="column-title-group">
                 <span class="column-dot review"></span>
-                <span>IN REVIEW</span>
+                <span>🔍 LEAD VERIFY</span>
               </div>
               <span class="task-count" id="count-review">0</span>
             </div>
@@ -250,7 +273,7 @@
             <div class="column-header">
               <div class="column-title-group">
                 <span class="column-dot completed"></span>
-                <span>DONE</span>
+                <span>✅ DONE</span>
               </div>
               <span class="task-count" id="count-done">0</span>
             </div>
@@ -258,6 +281,113 @@
               <!-- Drag and drop cards -->
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- VIEW: TEST CASE SUMMARY REPORT (Excel-like Act-Budget Report) -->
+      <section id="view-summary" class="tab-view">
+        <div class="view-intro" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
+          <div>
+            <h3>📊 รายงานสรุปผลการทดสอบโครงการ (Test Case Summary Report)</h3>
+            <p>สรุปความคืบหน้าการทดสอบ ถอดแบบจากโครงสร้าง Excel (Act-Budget) พร้อมคำนวณ Pass Rate และ Progress อัตโนมัติ</p>
+          </div>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" id="btn-import-summary-csv">
+              <i data-lucide="upload"></i> นำเข้าข้อมูล (CSV/JSON)
+            </button>
+            <input type="file" id="summary-file-input" style="display:none;" accept=".csv, .json">
+            <button class="btn btn-secondary btn-sm" id="btn-export-summary-csv">
+              <i data-lucide="download"></i> ส่งออกไฟล์ CSV
+            </button>
+            <button class="btn btn-primary btn-sm" id="btn-print-summary">
+              <i data-lucide="printer"></i> พิมพ์รายงาน / PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- Project Header Metadata Card -->
+        <div class="summary-project-header-card glassmorphism" style="margin-bottom: 1.2rem; padding: 1.2rem; border-radius: 12px; background:rgba(15,23,42,0.4); border:1px solid var(--glass-border);">
+          <h4 style="margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem; color:#3b82f6; font-size:1rem;">
+            <i data-lucide="folder-kanban"></i> ข้อมูลภาพรวมโครงการ (Project Metadata)
+          </h4>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem;">
+            <div class="form-group" style="margin:0;">
+              <label style="font-size:0.75rem; color:var(--color-text-muted);">ชื่อโครงการ (Project Name)</label>
+              <input type="text" id="summary-meta-project" value="Act-Budget" style="padding:0.4rem 0.6rem; font-size:0.85rem; font-weight:700; color:#3b82f6;">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label style="font-size:0.75rem; color:var(--color-text-muted);">รอบการทดสอบ (Test Cycle)</label>
+              <input type="text" id="summary-meta-cycle" value="UAT Phase 1" style="padding:0.4rem 0.6rem; font-size:0.85rem;">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label style="font-size:0.75rem; color:var(--color-text-muted);">ช่วงเวลา (Timeline Start - End)</label>
+              <input type="text" id="summary-meta-timeline" value="2026-08-01 - 2026-08-31" style="padding:0.4rem 0.6rem; font-size:0.85rem;">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label style="font-size:0.75rem; color:var(--color-text-muted);">ผู้จัดการโครงการ (Project Manager)</label>
+              <input type="text" id="summary-meta-pm" value="Varissara Tanboonjit" style="padding:0.4rem 0.6rem; font-size:0.85rem;">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label style="font-size:0.75rem; color:var(--color-text-muted);">จำนวนวันทำงานรวม (Manday)</label>
+              <input type="text" id="summary-meta-manday" value="45 Days" style="padding:0.4rem 0.6rem; font-size:0.85rem;">
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI Metrics Cards -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.2rem;">
+          <div class="db-widget-card" style="padding:1rem; text-align:center;">
+            <span style="font-size:0.75rem; color:var(--color-text-muted);">จำนวนเคสทดสอบรวม (Total Execute)</span>
+            <h2 id="kpi-total-execute" style="color:#3b82f6; font-size:1.8rem; margin-top:0.3rem;">221</h2>
+          </div>
+          <div class="db-widget-card" style="padding:1rem; text-align:center;">
+            <span style="font-size:0.75rem; color:var(--color-text-muted);">ทดสอบผ่านแล้ว (Pass)</span>
+            <h2 id="kpi-passed" style="color:#10b981; font-size:1.8rem; margin-top:0.3rem;">187 <span style="font-size:0.85rem; font-weight:normal;">(75.57%)</span></h2>
+          </div>
+          <div class="db-widget-card" style="padding:1rem; text-align:center;">
+            <span style="font-size:0.75rem; color:var(--color-text-muted);">ยังไม่เริ่มดำเนินการ (Not Start)</span>
+            <h2 id="kpi-not-start" style="color:#f59e0b; font-size:1.8rem; margin-top:0.3rem;">54 <span style="font-size:0.85rem; font-weight:normal;">(24.43%)</span></h2>
+          </div>
+          <div class="db-widget-card" style="padding:1rem; text-align:center;">
+            <span style="font-size:0.75rem; color:var(--color-text-muted);">อัตราผ่านรวม (Overall Pass Rate)</span>
+            <h2 id="kpi-pass-rate" style="color:#a855f7; font-size:1.8rem; margin-top:0.3rem;">75.57%</h2>
+          </div>
+        </div>
+
+        <!-- Excel-like Test Case Table Container -->
+        <div class="summary-table-container glassmorphism" style="padding:1.2rem; border-radius:12px; overflow-x:auto; background:rgba(15,23,42,0.4); border:1px solid var(--glass-border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+            <h4 style="font-size:0.95rem; font-weight:700; color:#fff; display:flex; align-items:center; gap:0.5rem;">
+              <i data-lucide="table"></i> ตารางสรุปผลการทดสอบแยกตามหัวข้อ (Test Case Summary Table - Phase 1)
+            </h4>
+            <button class="btn btn-secondary btn-sm" id="btn-add-summary-row">
+              <i data-lucide="plus"></i> เพิ่มแถวรายการใหม่
+            </button>
+          </div>
+          <table class="excel-summary-table" style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+            <thead>
+              <tr style="background:rgba(30, 41, 59, 0.9); color:#94a3b8; text-align:left;">
+                <th style="padding:0.6rem; border:1px solid var(--glass-border);">TC ID</th>
+                <th style="padding:0.6rem; border:1px solid var(--glass-border);">Test Case Name</th>
+                <th style="padding:0.6rem; border:1px solid var(--glass-border); width:80px;">Environment</th>
+                <th style="padding:0.6rem; border:1px solid var(--glass-border); width:100px;">Assigned To</th>
+                <th style="padding:0.6rem; border:1px solid var(--glass-border); width:110px;">Status</th>
+                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:90px;">Total Execute</th>
+                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:75px;">Pass</th>
+                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:75px;">Fail</th>
+                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:75px;">Inprogress</th>
+                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:75px;">Not Start</th>
+                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:90px;">Pass Rate (%)</th>
+                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:60px;">จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="summary-table-body">
+              <!-- Dynamic rows generated by JS -->
+            </tbody>
+            <tfoot id="summary-table-foot" style="font-weight:700; background:rgba(15, 23, 42, 0.95); color:#fff;">
+              <!-- Totals calculated by JS -->
+            </tfoot>
+          </table>
         </div>
       </section>
 
@@ -318,6 +448,18 @@
             </div>
             <div class="velocity-list" id="velocity-list-container" style="display:flex; flex-direction:column; gap:0.6rem; margin-top:1rem;">
               <!-- Dynamic velocity bars showing completed vs committed SP -->
+            </div>
+          </div>
+
+          <!-- Widget 5: Blocked Tasks Summary -->
+          <div class="db-widget-card" style="grid-column: span 3; margin-top: 1rem;">
+            <div class="widget-header">
+              <h5 style="color:#ef4444; display:flex; align-items:center; gap:0.4rem;">
+                <i data-lucide="alert-triangle" style="width:18px; height:18px;"></i> งานที่ติดขัด Blocker (QA Blocked Tasks Summary)
+              </h5>
+            </div>
+            <div id="blocked-tasks-summary-container" style="margin-top:1rem; display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 0.8rem;">
+              <!-- Dynamic cards for blocked tasks -->
             </div>
           </div>
         </div>
@@ -475,12 +617,14 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label for="issue-type-input">ประเภทงาน (Issue Type)</label>
+            <label for="issue-type-input">ประเภทงาน (Tester Task Type)</label>
             <select id="issue-type-input">
-              <option value="Story" selected>Story</option>
-              <option value="Task">Task</option>
-              <option value="Bug">Bug</option>
-              <option value="Epic">Epic</option>
+              <option value="Test Planning & Design" selected>📝 Test Planning & Design</option>
+              <option value="Automation Development">🤖 Automation Development</option>
+              <option value="Sprint Test Execution">🔄 Sprint Test Execution</option>
+              <option value="Environment & Data Prep">🛠️ Environment & Data Prep</option>
+              <option value="UAT & Coordination">🤝 UAT & Coordination</option>
+              <option value="Epic">⚡ Epic</option>
             </select>
           </div>
           <div class="form-group">
@@ -493,9 +637,17 @@
               <option value="Lowest">Lowest</option>
             </select>
           </div>
-          <div class="form-group" id="issue-sp-group">
+          <div class="form-group" style="display:none;">
             <label for="issue-sp-input">Story Points</label>
-            <input type="number" id="issue-sp-input" value="1" min="0" max="100">
+            <input type="number" id="issue-sp-input" value="3" min="0">
+          </div>
+          <div class="form-group" id="issue-est-hours-group">
+            <label for="issue-est-hours-input">Est. Hours *</label>
+            <input type="number" id="issue-est-hours-input" value="8" min="0">
+          </div>
+          <div class="form-group" id="issue-actual-hours-group">
+            <label for="issue-actual-hours-input">Actual Hours</label>
+            <input type="number" id="issue-actual-hours-input" value="0" min="0">
           </div>
         </div>
 
@@ -605,9 +757,10 @@
             <div class="form-group">
               <label>สถานะการทำงาน (Status)</label>
               <select id="drawer-status-select" style="margin-top:0.25rem;">
-                <option value="To Do">To Do</option>
+                <option value="To Do">Backlog / Plan</option>
                 <option value="In Progress">In Progress</option>
-                <option value="In Review">In Review</option>
+                <option value="Blocked">Blocked / Waiting</option>
+                <option value="In Review">Lead Verify</option>
                 <option value="Done">Done</option>
               </select>
             </div>
@@ -639,10 +792,33 @@
                   <option value="Lowest">Lowest</option>
                 </select>
               </div>
-              <div class="form-group">
+              <div class="form-group" style="display:none;">
                 <label>Story Points</label>
                 <input type="number" id="drawer-sp-field" min="0" style="margin-top:0.25rem;">
               </div>
+              <div class="form-group">
+                <label>Est. Hours</label>
+                <input type="number" id="drawer-est-hours-field" min="0" style="margin-top:0.25rem;">
+              </div>
+              <div class="form-group">
+                <label>Actual Hours</label>
+                <input type="number" id="drawer-actual-hours-field" min="0" style="margin-top:0.25rem;">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="drawer-progress-slider">ความคืบหน้า: <span id="drawer-progress-val">0</span>%</label>
+              <input type="range" id="drawer-progress-slider" min="0" max="100" step="25" style="margin-top:0.25rem;">
+            </div>
+
+            <div class="form-group" style="flex-direction:row; align-items:center; gap:0.5rem; margin-top:0.3rem;">
+              <input type="checkbox" id="drawer-help-checkbox" style="width:auto; margin:0; cursor:pointer;">
+              <label for="drawer-help-checkbox" style="cursor:pointer; color:#f59e0b; font-weight:700;">👨‍💼 ขอคนช่วย (Request Help)</label>
+            </div>
+
+            <div class="form-group" id="drawer-blocker-group" style="display:none;">
+              <label for="drawer-blocker-field" style="color:#ef4444; font-weight:700;">🚨 สาเหตุที่ติด Blocker (Blocker Reason)</label>
+              <textarea id="drawer-blocker-field" class="drawer-editable-field" rows="2" style="background:rgba(239,68,68,0.05); border:1px solid #ef4444; padding:0.4rem; border-radius:8px; font-size:0.8rem; color:#172b4d;" placeholder="ระบุสาเหตุที่ทำให้งานติดขัด..."></textarea>
             </div>
 
             <div class="form-group">

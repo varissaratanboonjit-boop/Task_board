@@ -193,10 +193,13 @@
       await click('#btn-create-issue', 'ปุ่มบวกสร้างการ์ดงาน');
       assertExists('#issue-modal.active', 'แบบฟอร์มสร้างการ์ดงานเปิดสำเร็จ');
 
-      await type('#issue-title-input', 'ทดสอบการเชื่อมต่อ API หลังบ้าน', 'ระบุชื่อการ์ดงาน');
-      await select('#issue-type-input', 'Story', 'เลือกประเภทงานเป็น Story');
+      await type('#issue-title-input', 'เตรียมแผนงานทดสอบ SAP FI Integration', 'ระบุชื่อการ์ดงาน');
+      await select('#issue-type-input', 'Test Planning & Design', 'เลือกประเภทงานเป็น Test Planning & Design');
       await select('#issue-priority-input', 'High', 'ระบุระดับความรุนแรง High');
-      await type('#issue-sp-input', '5', 'ใส่คะแนน Story Points = 5');
+      
+      if (document.getElementById('issue-est-hours-input')) {
+        await type('#issue-est-hours-input', '16', 'ระบุชั่วโมงประเมิน Est. Hours = 16');
+      }
       
       const today = window.qcState.formatDateOffset(0);
       const nextWeek = window.qcState.formatDateOffset(7);
@@ -205,10 +208,10 @@
 
       await type('#issue-assignee-input', 'สมชาย คิวเอ', 'ระบุชื่อผู้รับผิดชอบ (Assignee)');
       await select('#issue-epic-select', document.querySelector('#issue-epic-select option:nth-child(2)').value, 'เลือกผูกกับ Epic');
-      await type('#issue-detail-input', 'สเต็ปเชื่อมต่อโมเดลดาต้าเบสหลักดึง API', 'กรอกช่องรายละเอียดงาน (Detail)');
+      await type('#issue-detail-input', 'วิเคราะห์ข้อกำหนดสเปกและจัดทำเคสสอบทาน', 'กรอกช่องรายละเอียดงาน (Detail)');
       await type('#issue-remark-input', 'หมายเหตุเพิ่มเติมรัน E2E', 'กรอกช่องหมายเหตุ (Remark)');
 
-      await click('#btn-save-issue', 'กดยืนยันบันทึกการ์ดงาน');
+      await click('#issue-form button[type="submit"]', 'กดยืนยันบันทึกการ์ดงาน');
       assert(!document.getElementById('issue-modal').classList.contains('active'), 'แบบฟอร์มปิดตัวลงเรียบร้อย');
 
       // Create new Sprint
@@ -217,15 +220,14 @@
       assert(sprintCount > 0, 'Sprint 2 (Future) ถูกจัดตั้งและแสดงผลสำเร็จ');
     },
 
-    // 3. ลากย้ายการ์ดงาน (Active Sprint Board)
+    // 3. จำลองย้ายการ์ดงานและปักธง Blocked
     async () => {
-      log("--- เทส 3: ย้ายแผนสปินต์และการ์ดงาน ---", "header-log");
-      // Simulate backlog to Active Sprint allocation
+      log("--- เทส 3: ย้ายแผนสปินต์และจำลองสถานะติด Blocker ---", "header-log");
       const allIssues = window.qcState.getIssues();
       assert(allIssues.length > 0, 'พบประวัติการ์ดงานในระบบ');
       
       const lastIssue = allIssues[allIssues.length - 1];
-      createdIssueKey = lastIssue.id; // Save key for next tests
+      createdIssueKey = lastIssue.id;
 
       log(`จำลองการย้ายการ์ด ${createdIssueKey} ไปยัง Active Sprint และอัปเดตเป็น In Progress...`, "info");
       lastIssue.sprintId = 'active-sprint';
@@ -237,28 +239,54 @@
       
       // Verify card existence in In Progress column
       const cardEl = document.querySelector(`#board-card-${createdIssueKey}`);
-      assert(cardEl !== null, 'พบการ์ดงานย้ายมาแสดงบนคอลัมน์ IN PROGRESS ของบอร์ดสะสมสำเร็จ');
+      assert(cardEl !== null, 'พบการ์ดงานย้ายมาแสดงบนคอลัมน์ IN PROGRESS สำเร็จ');
       
-      // Check Card Contents (Assignee, Start Date, End Date, Remark)
-      const datesLabel = cardEl.querySelector('.card-dates-row').textContent;
-      assert(datesLabel.includes('เริ่ม:'), 'การ์ดงานแสดงข้อมูลวันเริ่มงาน (Start Date)');
-      assert(datesLabel.includes('End:'), 'การ์ดงานแสดงข้อมูลวันสิ้นสุดงาน (End Date)');
+      // Click Blocked flag button on card
+      log("จำลองการกดปุ่มติดธงแดงแจ้งเตือนปัญหา (Flag as Blocked)...", "info");
+      const flagBtn = cardEl.querySelector('button[title="ติดธง/ยกเลิก Blocker"]');
+      assert(flagBtn !== null, 'พบปุ่มปักธงบนการ์ด');
+      flagBtn.click();
       
-      const remarkLabel = cardEl.querySelector('.card-remark').textContent;
-      assert(remarkLabel.includes('Remark:'), 'การ์ดงานแสดงผลหมายเหตุเพิ่มเติม (Remark)');
+      // Allow state to update and re-render
+      await new Promise(r => setTimeout(r, 150));
+      
+      // Verify it moved to Blocked column
+      const blockedContainer = document.getElementById('board-blocked-container');
+      const cardInBlocked = blockedContainer.querySelector(`#board-card-${createdIssueKey}`);
+      assert(cardInBlocked !== null, 'การ์ดงานย้ายไปแสดงผลที่คอลัมน์ BLOCKED / WAITING เรียบร้อย');
     },
 
-    // 4. คลิกแก้ไขรายละเอียดการ์ดผ่าน Drawer
+    // 4. แก้ไขรายละเอียดผ่าน Drawer ปรับ Progress Slider
     async () => {
-      log(`--- เทส 4: เปิดดูและแก้ไขรายละเอียดการ์ด (${createdIssueKey}) ---`, "header-log");
+      log(`--- เทส 4: เปิดดูและแก้ไขรายละเอียดการ์ดผ่าน Drawer (${createdIssueKey}) ---`, "header-log");
       await click(`#board-card-${createdIssueKey} .card-issue-key`, 'คลิกเลข Key งานเปิด Drawer');
-      assertExists('#defect-drawer-overlay.active', 'ลิ้นชักรายละเอียดด้านขวา (Details Drawer) สไลด์เปิดขึ้นสำเร็จ');
+      assertExists('#defect-drawer-overlay.active', 'ลิ้นชักรายละเอียดด้านขวาเปิดสำเร็จ');
 
       // Edit fields inside Drawer
-      await type('#drawer-title-field', 'ทดสอบการเชื่อมต่อ API หลังบ้าน (แก้ไขล่าสุด)', 'แก้ไขชื่อหัวข้อ');
-      await type('#drawer-detail-field', 'รายละเอียดงานที่ได้รับการปรับปรุงเนื้อหาครบถ้วน', 'แก้ไขช่องรายละเอียด (Detail)');
-      await type('#drawer-remark-field', 'หมายเหตุใหม่ด่วนมาก', 'แก้ไขช่องหมายเหตุ (Remark)');
-      await type('#drawer-sp-field', '8', 'ปรับ Story Points เป็น 8 SP');
+      await type('#drawer-title-field', 'เตรียมแผนงานทดสอบ SAP FI Integration (แก้ไขล่าสุด)', 'แก้ไขชื่อหัวข้อ');
+      await type('#drawer-detail-field', 'รายละเอียดที่ได้รับการปรับปรุงเนื้อหา', 'แก้ไขช่องรายละเอียด');
+      await type('#drawer-remark-field', 'หมายเหตุใหม่ด่วนมาก', 'แก้ไขหมายเหตุ');
+      
+      // Slider progress set to 75%
+      const slider = document.getElementById('drawer-progress-slider');
+      if (slider) {
+        slider.value = 75;
+        slider.dispatchEvent(new Event('input'));
+        log("เลื่อนสไลเดอร์ความคืบหน้าเป็น 75%", "info");
+      }
+      
+      // Request help checkbox
+      const helpCheckbox = document.getElementById('drawer-help-checkbox');
+      if (helpCheckbox) {
+        helpCheckbox.checked = true;
+        log("ทำเครื่องหมายขอความช่วยเหลือ (Request Help)", "info");
+      }
+
+      // Est & Actual hours
+      const estField = document.getElementById('drawer-est-hours-field');
+      const actField = document.getElementById('drawer-actual-hours-field');
+      if (estField) estField.value = 16;
+      if (actField) actField.value = 4;
 
       // Add subtask
       await click('#btn-add-subtask', 'คลิกเพิ่มเช็คลิสต์ย่อย (Sub-task)');
@@ -269,8 +297,10 @@
       await click('#btn-save-drawer-changes', 'กดยืนยันเซฟข้อมูลในลิ้นชัก');
       
       // Verify update on Active Board card
-      const cardTitleText = document.querySelector(`#board-card-${createdIssueKey} h3`).textContent;
-      assert(cardTitleText.includes('(แก้ไขล่าสุด)'), 'ข้อมูลความคืบหน้าที่แก้ไขอัปเดตลงตารางการ์ดบนบอร์ดเรียบร้อย');
+      const cardEl = document.querySelector(`#board-card-${createdIssueKey}`);
+      const cardTitleText = cardEl.querySelector('h3').textContent;
+      assert(cardTitleText.includes('(แก้ไขล่าสุด)'), 'ข้อมูลความคืบหน้าที่แก้ไขอัปเดตลงบอร์ดเรียบร้อย');
+      assert(cardEl.classList.contains('help-requested'), 'การ์ดติดเอฟเฟกต์กระพริบขอความช่วยเหลือเรียบร้อย');
     },
 
     // 5. พิมพ์คอมเม้นต์ถามตอบราย Task
@@ -279,33 +309,33 @@
       await click(`#board-card-${createdIssueKey} .card-issue-key`, 'เปิด Drawer คีย์งานอีกครั้ง');
       
       await type('#comment-author-input', 'QA Auto Engine', 'พิมพ์ชื่อผู้โพสต์');
-      await type('#comment-text-input', 'ทดสอบพิมพ์คอมเม้นต์การแชทภาษาไทยในสปินต์บอร์ด', 'กรอกข้อความแชท');
+      await type('#comment-text-input', 'กำลังประสานงานทีมเพื่อเข้าทดสอบเพิ่มเติม', 'กรอกข้อความแชท');
       await click('#comment-add-form button[type="submit"]', 'กดส่งความคิดเห็น');
 
       const commentsCount = document.querySelectorAll('#drawer-comments-container .chat-bubble').length;
-      assert(commentsCount > 0, 'ห้องสนทนาแสดงผลบันทึกข้อความภาษาไทยสำเร็จ');
+      assert(commentsCount > 0, 'ห้องสนทนาแสดงผลบันทึกข้อความสำเร็จ');
 
       await click('#btn-close-defect-drawer', 'กดปิดลิ้นชักด้านขวา');
     },
 
-    // 6. คำนวณเบิร์นดาวน์ & แดชบอร์ดสรุป
+    // 6. แดชบอร์ดสรุป Blocker และการกระจายงาน
     async () => {
-      log("--- เทส 6: คำนวณแดชบอร์ดสะสมและส่งออกรายงาน ---", "header-log");
+      log("--- เทส 6: ตรวจสอบแดชบอร์ดสรุป Blocker และส่งออกรายงาน ---", "header-log");
       await click('#tab-dashboard', 'สลับแท็บ Dashboard');
       
-      // Check Burndown Chart and workload
-      const svgPaths = document.querySelectorAll('#burndown-svg-chart path').length;
-      assert(svgPaths > 0, 'กราฟวิเคราะห์แนวโน้ม Burndown Chart วาดแสดงพิกัด SVG สำเร็จ');
+      // Check Blocked tasks list widget
+      const blockedWidgetContainer = document.getElementById('blocked-tasks-summary-container');
+      assert(blockedWidgetContainer !== null, 'พบ Widget สรุปงานติด Blocker บนแดชบอร์ด');
+      assert(blockedWidgetContainer.textContent.includes(createdIssueKey), 'Widget แสดงรหัสงานติด Blocker ถูกต้อง');
 
       const workloadText = document.getElementById('workload-bars-container').textContent;
-      assert(workloadText.includes('สมชาย คิวเอ'), 'แดชบอร์ดจัดแบ่งภาระงานสะสม Story Points ให้ผู้รับผิดชอบถูกต้อง');
+      assert(workloadText.includes('สมชาย คิวเอ'), 'แดชบอร์ดแสดงกราฟภาระงานของ สมชาย คิวเอ');
 
       // Settings downloads test
       await click('#tab-settings', 'สลับแท็บ Settings');
-      await click('#btn-export-tasks-csv', 'กดาวน์โหลดรายงานการ์ดงาน CSV');
-      await click('#btn-export-sprints-csv', 'กดดาวน์โหลดสถิติ Sprints CSV');
+      await click('#btn-export-tasks-csv', 'ดาวน์โหลดรายงานการ์ดงาน CSV');
 
-      log("E2E Automated Tests การันตีระบบคัมบัง Jira-like บอร์ดเสร็จสมบูรณ์ผ่านครบ 100%! 🏆", "success");
+      log("E2E Automated Tests การันตีระบบ Tester Progress Board ผ่านครบ 100%! 🏆", "success");
     }
   ];
 
@@ -319,6 +349,7 @@
     window.prompt = (msg) => {
       if (msg && msg.includes("Epic")) return "Epic Setup 101";
       if (msg && msg.includes("Sub-task")) return "Subtask Check A";
+      if (msg && msg.includes("Blocker")) return "ติดปัญหาบัญชีสำหรับเข้าเทสระบบ SAP ล็อก";
       return "Mock Response";
     };
 

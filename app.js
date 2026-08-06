@@ -5,6 +5,7 @@ let epics = [];
 let sprints = [];
 let issues = [];
 let comments = {};
+let summaryData = [];
 
 // Active View Tab State
 let activeTab = 'roadmap';
@@ -12,7 +13,7 @@ let activeEpicFilter = null; // Filter board/backlog by Epic
 let activeIssueForDrawer = null;
 
 // Mock Names & Seed Helper
-const mockAssignees = ["สมชาย คิวเอ", "Chaemongkhon", "Nattaphong", "Dev A", "Dev B"];
+const mockAssignees = ["Ynok", "Sai", "Jud", "สมชาย คิวเอ"];
 function formatDateOffset(daysOffset) {
   const d = new Date();
   d.setDate(d.getDate() + daysOffset);
@@ -23,6 +24,20 @@ function formatDateOffset(daysOffset) {
 // 1. LOCAL STORAGE SEED & INITIALIZATION
 // ==========================================================================
 function initLocalStorage() {
+  // Test Summary Data (From Act-Budget Excel image)
+  if (localStorage.getItem('jira_summary_data') === null) {
+    const defaultSummary = [
+      { id: "ACTbudget-001", name: "Login_Logout", env: "UAT", assignedTo: "Ynok", status: "In Progress", total: 6, pass: 0, fail: 0, inprogress: 0, notStart: 6 },
+      { id: "ACTbudget-002", name: "Dashboard", env: "UAT", assignedTo: "", status: "Not Start", total: 1, pass: 0, fail: 0, inprogress: 0, notStart: 1 },
+      { id: "ACTbudget-003", name: "Create New Annual", env: "UAT", assignedTo: "Yid", status: "Pass", total: 57, pass: 57, fail: 0, inprogress: 0, notStart: 0 },
+      { id: "ACTbudget-004", name: "Select budget", env: "UAT", assignedTo: "Sai", status: "Not Start", total: 25, pass: 8, fail: 0, inprogress: 0, notStart: 17 },
+      { id: "ACTbudget-005", name: "Select Assignee", env: "UAT", assignedTo: "Jud", status: "Pass", total: 28, pass: 28, fail: 0, inprogress: 0, notStart: 0 },
+      { id: "ACTbudget-006", name: "Set up Budget", env: "UAT", assignedTo: "Jud", status: "Pass", total: 74, pass: 74, fail: 0, inprogress: 0, notStart: 0 },
+      { id: "ACTbudget-007", name: "summary Set up", env: "UAT", assignedTo: "Ynok", status: "Not Start", total: 8, pass: 0, fail: 0, inprogress: 0, notStart: 8 },
+      { id: "ACTbudget-008", name: "Summary Department", env: "UAT", assignedTo: "Jud", status: "Not Start", total: 23, pass: 0, fail: 0, inprogress: 0, notStart: 23 }
+    ];
+    localStorage.setItem('jira_summary_data', JSON.stringify(defaultSummary));
+  }
   // 1. Projects
   if (localStorage.getItem('jira_projects') === null) {
     const defaultProjects = [
@@ -56,85 +71,121 @@ function initLocalStorage() {
   if (localStorage.getItem('jira_issues') === null) {
     const defaultIssues = [
       {
-        id: "CAPEX-001",
+        id: "TEST-001",
         projectId: "proj-102",
-        title: "ออกแบบตารางสัญญากลุ่ม IO และ WBS Master Data",
-        type: "Story",
+        title: "วางแผนและเขียน Test Cases สำหรับระบบ SAP FI Procurement",
+        type: "Test Planning & Design",
         priority: "High",
         status: "Done",
         sp: 5,
+        estHours: 12,
+        actualHours: 12,
+        progress: 100,
         startDate: formatDateOffset(-9),
         endDate: formatDateOffset(-4),
-        assignee: "Nattaphong",
+        assignee: "Ynok",
         reporter: "QA Reporter",
-        detail: "จัดทำฐานข้อมูลเก็บรหัสสัญญากลุ่ม IO ทั้งหมดสอดรับกับ SAP FI",
-        remark: "ผ่านขั้นตอนการสอบทานข้อมูลแล้ว",
+        detail: "วิเคราะห์เงื่อนไขจัดทำเอกสารและสเต็ปคำนวณการจัดซื้อ SAP FI",
+        remark: "ผ่านขั้นตอนการสอบทานร่วมกับ Lead แล้ว",
         epicId: "epic-1",
         sprintId: "active-sprint",
         createdDate: formatDateOffset(-10),
         subTasks: [
-          { id: "sub-1-1", title: "เตรียมโครงสร้างตาราง JSON", completed: true },
-          { id: "sub-1-2", title: "แมปฟิลด์รหัส IO", completed: true }
+          { id: "sub-1-1", title: "เตรียมโครงสร้างเอกสาร UAT", completed: true },
+          { id: "sub-1-2", title: "แมปฟิลด์รหัส IO ในฟิลเตอร์หลัก", completed: true }
         ],
         resolvedDate: formatDateOffset(-4)
       },
       {
-        id: "CAPEX-002",
+        id: "TEST-002",
         projectId: "proj-102",
-        title: "แก้ไขบัค WBS Dropdown แสดงรายการเรียงลำดับรหัสอักษรผิดพลาด",
-        type: "Bug",
+        title: "เขียน Automation Scripts สำหรับโมดูล Budgeting CAPEX ด้วย Playwright",
+        type: "Automation Development",
         priority: "Highest",
         status: "In Progress",
-        sp: 3,
+        sp: 8,
+        estHours: 24,
+        actualHours: 8,
+        progress: 25,
+        isHelpRequested: true,
         startDate: formatDateOffset(-5),
         endDate: formatDateOffset(1),
-        assignee: "Chaemongkhon",
+        assignee: "Sai",
         reporter: "สมชาย คิวเอ",
-        detail: "Dropdown แสดงรายการรหัส WBS สลับตำแหน่งกันค้นหายาก รบกวนเรียงลำดับ ASC",
-        remark: "กำลังทำ Mapping ดาต้าหน้าจอ",
+        detail: "พัฒนายูสเคสเขียนสคริปต์ลงชื่อเข้าใช้บอร์ดคัมบังและการลากวาง",
+        remark: "กำลังทำสคริปต์เช็คเอลิเมนต์หน้าจอ",
         epicId: "epic-1",
         sprintId: "active-sprint",
         createdDate: formatDateOffset(-5),
         subTasks: [
-          { id: "sub-2-1", title: "แก้ไขฟังก์ชัน sorting ASC", completed: false }
+          { id: "sub-2-1", title: "แก้ไของค์ประกอบ sorting ASC", completed: false }
         ]
       },
       {
-        id: "CAPEX-003",
+        id: "TEST-003",
         projectId: "proj-102",
-        title: "สร้างฟอร์มกรอกเอกสารเสนออนุมัติงบประมาณ CAPEX",
-        type: "Story",
-        priority: "Medium",
-        status: "To Do",
-        sp: 8,
+        title: "เตรียมข้อมูลทดสอบพนักงานและกลุ่มงบประมาณย่อย (Test Data Prep)",
+        type: "Environment & Data Prep",
+        priority: "High",
+        status: "Blocked",
+        sp: 3,
+        estHours: 8,
+        actualHours: 2,
+        progress: 50,
+        blockerReason: "ติดปัญหาบัญชีสำหรับเข้าเทสระบบ SAP ล็อก รอผู้เชี่ยวชาญตรวจสอบเวลา 14:00 น.",
         startDate: formatDateOffset(-1),
-        endDate: formatDateOffset(6),
-        assignee: "Dev A",
+        endDate: formatDateOffset(3),
+        assignee: "Jud",
         reporter: "QA Reporter",
-        detail: "หน้าจอ UI เพื่อเสนอข้อมูลและแนบลิงก์รูปผลการดำเนินงาน",
-        remark: "รอสเปก Validation เพิ่มเติม",
+        detail: "สร้างชุดข้อมูลผู้ใช้สำหรับทดสอบขั้นตอนคำนวณเงินปันผลสะสม",
+        remark: "ประสานงานไปแล้วทาง MS Teams",
         epicId: "epic-2",
         sprintId: "active-sprint",
         createdDate: formatDateOffset(-2),
         subTasks: []
       },
       {
-        id: "CAPEX-004",
+        id: "TEST-004",
         projectId: "proj-102",
-        title: "จัดทำไฟล์ส่งออกรายงาน Dashboard และความคืบหน้า (CSV)",
-        type: "Task",
-        priority: "Low",
+        title: "รันการทดสอบระบบจัดสรรงบประมาณรอบ Regression Testing (UAT Phase 1)",
+        type: "Sprint Test Execution",
+        priority: "Medium",
         status: "To Do",
-        sp: 2,
-        startDate: formatDateOffset(9),
-        endDate: formatDateOffset(15),
-        assignee: "Dev B",
+        sp: 5,
+        estHours: 16,
+        actualHours: 0,
+        progress: 0,
+        startDate: formatDateOffset(1),
+        endDate: formatDateOffset(7),
+        assignee: "สมชาย คิวเอ",
         reporter: "QA Reporter",
-        detail: "สร้างปุ่มให้กดดาวน์โหลดสรุปประวัติตารางงาน Epics/Sprints ทั้งหมดในระบบ",
-        remark: "",
-        epicId: "epic-3",
-        sprintId: "sprint-2",
+        detail: "ดำเนินการรันเทสเคสทั้งหมดของ SAP FI Integration",
+        remark: "รอบรรยายสเปกแก้บัค",
+        epicId: "epic-2",
+        sprintId: "active-sprint",
         createdDate: formatDateOffset(0),
+        subTasks: []
+      },
+      {
+        id: "TEST-005",
+        projectId: "proj-102",
+        title: "ประสานงาน UAT สนับสนุนการทดสอบร่วมกับทางผู้จัดการโครงการและทีมไอที",
+        type: "UAT & Coordination",
+        priority: "High",
+        status: "In Review",
+        sp: 2,
+        estHours: 8,
+        actualHours: 6,
+        progress: 75,
+        startDate: formatDateOffset(-2),
+        endDate: formatDateOffset(5),
+        assignee: "Jud",
+        reporter: "QA Reporter",
+        detail: "สรุปผลการเทสเคสส่งมอบให้ Test Lead ตรวจทานและอนุมัติ",
+        remark: "ตรวจสอบเอกสาร UAT แล้ว",
+        epicId: "epic-3",
+        sprintId: "active-sprint",
+        createdDate: formatDateOffset(-2),
         subTasks: []
       }
     ];
@@ -168,6 +219,7 @@ function loadAllState() {
   issues = allIssues.filter(i => i.projectId === activeProjectId);
 
   comments = JSON.parse(localStorage.getItem('jira_comments') || '{}');
+  summaryData = JSON.parse(localStorage.getItem('jira_summary_data') || '[]');
 }
 
 // Save back to LocalStorage
@@ -189,6 +241,8 @@ function saveGlobalState(type, data) {
     localStorage.setItem('jira_issues', JSON.stringify(merged));
   } else if (type === 'comments') {
     localStorage.setItem('jira_comments', JSON.stringify(data));
+  } else if (type === 'summary') {
+    localStorage.setItem('jira_summary_data', JSON.stringify(data));
   }
 }
 
@@ -206,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCreateIssueControls();
   setupBacklogSprintControls();
   setupDrawerControls();
+  setupSummaryControls();
   
   // Render default active tab
   renderActiveTab();
@@ -217,6 +272,7 @@ function setupSidebarNavigation() {
     'tab-roadmap': 'roadmap',
     'tab-backlog': 'backlog',
     'tab-board': 'board',
+    'tab-summary': 'summary',
     'tab-dashboard': 'dashboard',
     'tab-settings': 'settings'
   };
@@ -264,6 +320,9 @@ function renderActiveTab() {
   } else if (activeTab === 'board') {
     document.getElementById('view-board').classList.add('active');
     renderActiveBoardView();
+  } else if (activeTab === 'summary') {
+    document.getElementById('view-summary').classList.add('active');
+    renderSummaryView();
   } else if (activeTab === 'dashboard') {
     document.getElementById('view-dashboard').classList.add('active');
     renderDashboardView();
@@ -516,16 +575,43 @@ function downloadCSV(csvContent, filename) {
 }
 
 // Quick filters
+const btnFilterBlockers = document.getElementById('filter-blockers');
+const btnFilterReadyQA = document.getElementById('filter-ready-qa');
+if (btnFilterBlockers) {
+  btnFilterBlockers.addEventListener('click', () => {
+    activeEpicFilter = "blockers";
+    renderActiveTab();
+  });
+}
+if (btnFilterReadyQA) {
+  btnFilterReadyQA.addEventListener('click', () => {
+    activeEpicFilter = "ready-qa";
+    renderActiveTab();
+  });
+}
 document.getElementById('filter-my-issues').addEventListener('click', () => {
   activeEpicFilter = "my-issues";
   renderActiveTab();
 });
-document.getElementById('filter-bugs').addEventListener('click', () => {
-  activeEpicFilter = "only-bugs";
-  renderActiveTab();
-});
+
+const btnFilterDueSoon = document.getElementById('filter-due-soon');
+if (btnFilterDueSoon) {
+  btnFilterDueSoon.addEventListener('click', () => {
+    activeEpicFilter = "due-soon";
+    renderActiveTab();
+  });
+}
+
+const testerSelect = document.getElementById('filter-tester-select');
+if (testerSelect) {
+  testerSelect.addEventListener('change', () => {
+    renderActiveTab();
+  });
+}
+
 document.getElementById('filter-clear').addEventListener('click', () => {
   activeEpicFilter = null;
+  if (testerSelect) testerSelect.value = '';
   renderActiveTab();
 });
 
@@ -672,8 +758,6 @@ function renderBacklogView() {
   let filteredIssues = [...issues];
   if (activeEpicFilter === 'my-issues') {
     filteredIssues = filteredIssues.filter(i => i.assignee && i.assignee.includes("QA"));
-  } else if (activeEpicFilter === 'only-bugs') {
-    filteredIssues = filteredIssues.filter(i => i.type === 'Bug');
   } else if (activeEpicFilter) {
     filteredIssues = filteredIssues.filter(i => i.epicId === activeEpicFilter);
   }
@@ -821,6 +905,12 @@ function setupDragAndDropHandlers() {
           delete issue.resolvedDate;
         }
 
+        // If moved to Blocked, prompt for blocker reason
+        if (status === 'Blocked' && !issue.blockerReason) {
+          const reason = prompt("กรุณาระบุสาเหตุที่ติด Blocker:");
+          issue.blockerReason = reason ? reason.trim() : "ติดปัญหา";
+        }
+
         saveGlobalState('issues', issues);
         renderActiveBoardView();
       }
@@ -957,25 +1047,48 @@ function renderActiveBoardView() {
   document.getElementById('active-board-sprint-title').textContent = activeSprint.name;
   document.getElementById('active-board-sprint-dates').textContent = `${activeSprint.startDate} ถึง ${activeSprint.endDate}`;
 
+  // Populate tester dropdown filters
+  populateTesterFilterOptions();
+
   // Filter issues in active sprint
   let boardIssues = issues.filter(i => i.sprintId === 'active-sprint');
   
   if (activeEpicFilter === 'my-issues') {
-    boardIssues = boardIssues.filter(i => i.assignee && i.assignee.includes("QA"));
-  } else if (activeEpicFilter === 'only-bugs') {
-    boardIssues = boardIssues.filter(i => i.type === 'Bug');
+    boardIssues = boardIssues.filter(i => i.assignee && (i.assignee.includes("QA") || i.assignee.includes("สมชาย")));
+  } else if (activeEpicFilter === 'blockers') {
+    boardIssues = boardIssues.filter(i => i.status === 'Blocked' || i.priority === 'Highest' || (i.remark && i.remark.toLowerCase().includes('ติด')) || i.blockerReason);
+  } else if (activeEpicFilter === 'ready-qa') {
+    boardIssues = boardIssues.filter(i => i.status === 'In Review' || i.status === 'To Do');
+  } else if (activeEpicFilter === 'due-soon') {
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const twoDaysFromNow = new Date();
+    twoDaysFromNow.setDate(today.getDate() + 2);
+    twoDaysFromNow.setHours(23,59,59,999);
+    
+    boardIssues = boardIssues.filter(i => {
+      if (!i.endDate) return false;
+      const endD = new Date(i.endDate);
+      return endD >= today && endD <= twoDaysFromNow;
+    });
   } else if (activeEpicFilter) {
     boardIssues = boardIssues.filter(i => i.epicId === activeEpicFilter);
+  }
+
+  const testerFilterVal = document.getElementById('filter-tester-select').value;
+  if (testerFilterVal) {
+    boardIssues = boardIssues.filter(i => i.assignee === testerFilterVal);
   }
 
   const containers = {
     'To Do': document.getElementById('board-todo-container'),
     'In Progress': document.getElementById('board-inprogress-container'),
+    'Blocked': document.getElementById('board-blocked-container'),
     'In Review': document.getElementById('board-review-container'),
     'Done': document.getElementById('board-done-container')
   };
 
-  const counts = { 'To Do': 0, 'In Progress': 0, 'In Review': 0, 'Done': 0 };
+  const counts = { 'To Do': 0, 'In Progress': 0, 'Blocked': 0, 'In Review': 0, 'Done': 0 };
 
   // Clear containers
   Object.values(containers).forEach(c => { if(c) c.innerHTML = ''; });
@@ -984,33 +1097,65 @@ function renderActiveBoardView() {
     const col = i.status || 'To Do';
     if (containers[col]) {
       counts[col]++;
+      
+      let cardClasses = `kanban-card ${i.priority.toLowerCase()}`;
+      if (col === 'Blocked') cardClasses += ' blocked-active';
+      if (i.isHelpRequested) cardClasses += ' help-requested';
+
       const card = document.createElement('div');
-      card.className = `kanban-card ${i.priority.toLowerCase()}`;
+      card.className = cardClasses;
       card.setAttribute('draggable', 'true');
       card.setAttribute('id', `board-card-${i.id}`);
       card.setAttribute('data-id', i.id);
 
       const assigneeInitials = i.assignee ? i.assignee.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : 'UA';
+      const capStatus = getTesterCapacityStatus(i.assignee);
+      const statusIndicator = capStatus === 'overloaded' ? '🔴' : (i.assignee ? '🟢' : '⚪');
 
       card.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span class="card-issue-key" onclick="openDefectDrawer('${i.id}')">${i.id}</span>
-          <span class="badge-status ${i.type.toLowerCase()}">${i.type}</span>
+          <span class="card-issue-key" onclick="openDefectDrawer('${i.id}')" style="cursor:pointer; font-weight:700; color:#3b82f6;">${i.id}</span>
+          <span class="badge-status ${i.type.toLowerCase().replace(/[^a-zA-Z]/g, '-')}">${i.type}</span>
         </div>
         <h3 onclick="openDefectDrawer('${i.id}')" style="cursor:pointer;">${escapeHTML(i.title)}</h3>
         <div class="card-detail-text">${escapeHTML(i.detail || 'ไม่มีคำอธิบาย')}</div>
         
-        <div class="card-dates-row">
+        <!-- Progress Bar -->
+        <div style="margin-top:0.4rem; font-size:0.7rem; color:var(--color-text-muted);">
+          <span>ความคืบหน้า: ${i.progress || 0}%</span>
+          <div class="card-progress-bar-bg" title="ความคืบหน้า ${i.progress || 0}%">
+            <div class="card-progress-bar-fill" style="width: ${i.progress || 0}%;"></div>
+          </div>
+        </div>
+
+        <div class="card-dates-row" style="margin-top:0.4rem;">
           <span>เริ่ม: ${i.startDate || '-'}</span>
           <span>End: ${i.endDate || '-'}</span>
         </div>
-        ${i.remark ? `<div class="card-remark">Remark: ${escapeHTML(i.remark)}</div>` : ''}
 
-        <div class="card-footer-meta">
+        <!-- Blocker Reason & Help Request Badge -->
+        ${col === 'Blocked' && i.blockerReason ? `<div style="font-size:0.72rem; background:rgba(239, 68, 68, 0.05); border:1px solid #ef4444; border-radius:6px; padding:0.3rem; margin-top:0.3rem; color:#ef4444; font-weight:700;">⚠️ Blocker: ${escapeHTML(i.blockerReason)}</div>` : ''}
+        ${i.isHelpRequested ? `<div style="font-size:0.72rem; background:rgba(245, 158, 11, 0.1); border:1px solid #f59e0b; border-radius:6px; padding:0.3rem; margin-top:0.3rem; color:#f59e0b; font-weight:700; display:inline-flex; align-items:center; gap:0.2rem;"><i data-lucide="help-circle" style="width:12px; height:12px;"></i> ขอคนช่วย (Request Help)</div>` : ''}
+        
+        ${i.remark ? `<div class="card-remark" style="margin-top:0.4rem;">Remark: ${escapeHTML(i.remark)}</div>` : ''}
+
+        <div class="card-footer-meta" style="margin-top:0.6rem; display:flex; justify-content:space-between; align-items:center;">
           <span class="badge-tag ${i.priority.toLowerCase()}">${i.priority}</span>
+          
           <div style="display:flex; align-items:center; gap:0.4rem;">
-            <span class="badge-count" style="font-size:0.65rem; background:rgba(255,255,255,0.06);">${i.sp || 0} SP</span>
-            <div class="card-assignee-initials" title="${escapeHTML(i.assignee || 'Unassigned')}">${assigneeInitials}</div>
+            <!-- Quick Action Buttons -->
+            <button onclick="toggleCardBlocked('${i.id}', event)" title="ติดธง/ยกเลิก Blocker" style="background:transparent; border:none; padding:0.15rem; cursor:pointer; color:${col === 'Blocked' ? '#ff5630' : '#8993a4'}; display:flex; align-items:center;">
+              <i data-lucide="flag" style="width:12px; height:12px;"></i>
+            </button>
+            <button onclick="toggleCardHelp('${i.id}', event)" title="ขอคนช่วย/ยกเลิก" style="background:transparent; border:none; padding:0.15rem; cursor:pointer; color:${i.isHelpRequested ? '#ffab00' : '#8993a4'}; display:flex; align-items:center;">
+              <i data-lucide="help-circle" style="width:12px; height:12px;"></i>
+            </button>
+            
+            <span class="badge-count" style="font-size:0.65rem; background:rgba(0,0,0,0.06); padding:0.1rem 0.3rem; border-radius:4px;" title="เวลาทำจริง / แผนงาน">${i.actualHours || 0}h / ${i.estHours || 8}h</span>
+            <div class="card-assignee-initials" style="position:relative;" title="${escapeHTML(i.assignee || 'Unassigned')} (${capStatus === 'overloaded' ? '🔴 งานล้น' : '🟢 ว่าง'})">
+              ${assigneeInitials}
+              <span style="font-size:0.5rem; vertical-align:middle; margin-left:0.1rem;">${statusIndicator}</span>
+            </div>
           </div>
         </div>
       `;
@@ -1030,13 +1175,70 @@ function renderActiveBoardView() {
   });
 
   // Update counts
-  document.getElementById('count-todo').textContent = counts['To Do'];
-  document.getElementById('count-inprogress').textContent = counts['In Progress'];
-  document.getElementById('count-review').textContent = counts['In Review'];
-  document.getElementById('count-done').textContent = counts['Done'];
+  if (document.getElementById('count-todo')) document.getElementById('count-todo').textContent = counts['To Do'];
+  if (document.getElementById('count-inprogress')) document.getElementById('count-inprogress').textContent = counts['In Progress'];
+  if (document.getElementById('count-blocked')) document.getElementById('count-blocked').textContent = counts['Blocked'];
+  if (document.getElementById('count-review')) document.getElementById('count-review').textContent = counts['In Review'];
+  if (document.getElementById('count-done')) document.getElementById('count-done').textContent = counts['Done'];
 
   setupDragAndDropHandlers();
+  if (window.lucide) window.lucide.createIcons();
 }
+
+// Tester Helper Functions
+window.getTesterCapacityStatus = function(testerName) {
+  if (!testerName) return '';
+  const activeSprintIssues = issues.filter(i => i.sprintId === 'active-sprint' && i.assignee === testerName && i.status !== 'Done');
+  const totalSP = activeSprintIssues.reduce((sum, i) => sum + (parseInt(i.sp, 10) || 0), 0);
+  const activeTasksCount = activeSprintIssues.length;
+  
+  if (totalSP > 8 || activeTasksCount > 3) {
+    return 'overloaded';
+  }
+  return 'available';
+};
+
+window.populateTesterFilterOptions = function() {
+  const select = document.getElementById('filter-tester-select');
+  if (!select) return;
+  const currentVal = select.value;
+  select.innerHTML = '<option value="">👤 Tester ทั้งหมด</option>';
+  mockAssignees.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    const cap = getTesterCapacityStatus(name);
+    opt.textContent = `${name} (${cap === 'overloaded' ? '🔴 ล้นงาน' : '🟢 ว่าง'})`;
+    if (name === currentVal) opt.selected = true;
+    select.appendChild(opt);
+  });
+};
+
+window.toggleCardBlocked = function(issueId, event) {
+  if (event) event.stopPropagation();
+  const iss = issues.find(i => i.id === issueId);
+  if (iss) {
+    if (iss.status === 'Blocked') {
+      iss.status = 'In Progress';
+      iss.blockerReason = '';
+    } else {
+      iss.status = 'Blocked';
+      const reason = prompt("กรุณาระบุสาเหตุที่ติด Blocker:");
+      iss.blockerReason = reason ? reason.trim() : "ติดปัญหา";
+    }
+    saveGlobalState('issues', issues);
+    renderActiveTab();
+  }
+};
+
+window.toggleCardHelp = function(issueId, event) {
+  if (event) event.stopPropagation();
+  const iss = issues.find(i => i.id === issueId);
+  if (iss) {
+    iss.isHelpRequested = !iss.isHelpRequested;
+    saveGlobalState('issues', issues);
+    renderActiveTab();
+  }
+};
 
 // ==========================================================================
 // 6. DASHBOARD MANAGER (Burndown Chart & Stats calculation)
@@ -1046,11 +1248,58 @@ function renderDashboardView() {
   renderWorkloadBars();
   renderVelocityHistory();
   renderBurndownChart();
+  renderBlockedTasksSummary();
+}
+
+function renderBlockedTasksSummary() {
+  const container = document.getElementById('blocked-tasks-summary-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const blockedIssues = issues.filter(i => i.status === 'Blocked');
+  if (blockedIssues.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: span 3; text-align:center; padding:1.5rem; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); border-radius:8px;">
+        <span style="font-size:0.8rem; color:var(--color-text-muted);"><i data-lucide="check-circle" style="width:15px; height:15px; color:#36b37e; vertical-align:middle; margin-right:0.3rem;"></i> ทีมงานกำลังทำงานอย่างราบรื่น ไม่มีงานใดติด Blocker ในเวลานี้</span>
+      </div>
+    `;
+    if (window.lucide) window.lucide.createIcons();
+    return;
+  }
+
+  blockedIssues.forEach(i => {
+    const card = document.createElement('div');
+    card.style.background = 'rgba(239, 68, 68, 0.04)';
+    card.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+    card.style.borderRadius = '8px';
+    card.style.padding = '0.8rem';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.gap = '0.4rem';
+    
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <strong style="color:#ff5630; font-size:0.8rem; cursor:pointer;" onclick="openDefectDrawer('${i.id}')">${i.id}</strong>
+        <span style="font-size:0.65rem; color:#cbd5e1; background:rgba(255,255,255,0.1); padding:0.1rem 0.3rem; border-radius:4px;">${i.type}</span>
+      </div>
+      <h6 style="font-weight:700; color:#fff; margin:0; font-size:0.8rem;">${escapeHTML(i.title)}</h6>
+      <div style="font-size:0.75rem; color:#fca5a5; background:rgba(239, 68, 68, 0.1); border-radius:4px; padding:0.3rem; font-weight:600;">
+        ⚠️ Blocker: ${escapeHTML(i.blockerReason || 'ไม่ได้ระบุสาเหตุ')}
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:var(--color-text-muted); margin-top:0.2rem;">
+        <span>ผู้รับผิดชอบ: <strong>${escapeHTML(i.assignee || 'Unassigned')}</strong></span>
+        <span>เวลาแผน: <strong>${i.estHours || 8} ชั่วโมง</strong></span>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  if (window.lucide) window.lucide.createIcons();
 }
 
 function renderStatusDonutChart() {
   const container = document.getElementById('status-donut-chart');
   const legend = document.getElementById('status-donut-legend-list');
+  if (!container || !legend) return;
   container.innerHTML = '';
   legend.innerHTML = '';
 
@@ -1060,43 +1309,43 @@ function renderStatusDonutChart() {
     return;
   }
 
-  const counts = { 'To Do': 0, 'In Progress': 0, 'In Review': 0, 'Done': 0 };
+  const counts = { 'To Do': 0, 'In Progress': 0, 'Blocked': 0, 'In Review': 0, 'Done': 0 };
   issues.forEach(i => {
     counts[i.status || 'To Do']++;
   });
 
-  // Render a simple CSS circular gradient representing the breakdown
   const todoPct = (counts['To Do'] / total) * 360;
   const ipPct = (counts['In Progress'] / total) * 360;
+  const blockedPct = (counts['Blocked'] / total) * 360;
   const reviewPct = (counts['In Review'] / total) * 360;
   const donePct = (counts['Done'] / total) * 360;
 
-  // Pie CSS gradient
+  // Pie CSS conic gradient
   container.style.width = '120px';
   container.style.height = '120px';
   container.style.borderRadius = '50%';
   container.style.background = `conic-gradient(
     #64748b 0deg ${todoPct}deg,
     #eab308 ${todoPct}deg ${todoPct + ipPct}deg,
-    #a855f7 ${todoPct + ipPct}deg ${todoPct + ipPct + reviewPct}deg,
-    #10b981 ${todoPct + ipPct + reviewPct}deg 360deg
+    #ef4444 ${todoPct + ipPct}deg ${todoPct + ipPct + blockedPct}deg,
+    #a855f7 ${todoPct + ipPct + blockedPct}deg ${todoPct + ipPct + blockedPct + reviewPct}deg,
+    #10b981 ${todoPct + ipPct + blockedPct + reviewPct}deg 360deg
   )`;
   container.style.position = 'relative';
   container.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
   
-  // Donut inner hole
   container.innerHTML = `
     <div style="position:absolute; width:70px; height:70px; background:#0b1221; border-radius:50%; top:25px; left:25px; display:flex; flex-direction:column; justify-content:center; align-items:center; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">
       <span style="font-size:1.1rem; font-weight:700; color:#fff;">${total}</span>
-      <span style="font-size:0.55rem; color:var(--color-text-muted); text-transform:uppercase;">Issues</span>
+      <span style="font-size:0.55rem; color:var(--color-text-muted); text-transform:uppercase;">งานทั้งหมด</span>
     </div>
   `;
 
-  // Legend List
   const keys = [
-    { label: 'To Do', color: '#64748b', count: counts['To Do'] },
+    { label: 'Backlog / Plan', color: '#64748b', count: counts['To Do'] },
     { label: 'In Progress', color: '#eab308', count: counts['In Progress'] },
-    { label: 'In Review', color: '#a855f7', count: counts['In Review'] },
+    { label: 'Blocked / Waiting', color: '#ef4444', count: counts['Blocked'] },
+    { label: 'Lead Verify', color: '#a855f7', count: counts['In Review'] },
     { label: 'Done', color: '#10b981', count: counts['Done'] }
   ];
 
@@ -1116,6 +1365,7 @@ function renderStatusDonutChart() {
 
 function renderWorkloadBars() {
   const container = document.getElementById('workload-bars-container');
+  if (!container) return;
   container.innerHTML = '';
 
   const workloads = {};
@@ -1123,11 +1373,13 @@ function renderWorkloadBars() {
   workloads['Unassigned'] = 0;
 
   issues.forEach(i => {
-    const name = i.assignee || 'Unassigned';
-    if (workloads[name] !== undefined) {
-      workloads[name] += (i.sp || 0);
-    } else {
-      workloads[name] = (i.sp || 0);
+    if (i.sprintId === 'active-sprint' && i.status !== 'Done') {
+      const name = i.assignee || 'Unassigned';
+      if (workloads[name] !== undefined) {
+        workloads[name] += (i.sp || 3);
+      } else {
+        workloads[name] = (i.sp || 3);
+      }
     }
   });
 
@@ -1136,14 +1388,19 @@ function renderWorkloadBars() {
   Object.keys(workloads).forEach(name => {
     const sp = workloads[name];
     const pct = (sp / maxSP) * 100;
+    const cap = getTesterCapacityStatus(name);
+    const badge = cap === 'overloaded' ? '<span class="tester-status-badge overloaded">🔴 ล้นงาน (Overloaded)</span>' : (name !== 'Unassigned' ? '<span class="tester-status-badge available">🟢 พร้อม (Available)</span>' : '');
 
     container.innerHTML += `
-      <div class="workload-bar-row">
-        <strong style="color:#cbd5e1; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${escapeHTML(name)}</strong>
-        <div class="workload-bar-wrapper">
-          <div class="workload-bar-fill" style="width: ${pct}%;"></div>
+      <div class="workload-bar-row" style="display:flex; align-items:center; gap:0.8rem; margin-bottom:0.4rem;">
+        <div style="width:120px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; display:flex; flex-direction:column;">
+          <strong style="color:#cbd5e1; font-size:0.8rem;">${escapeHTML(name)}</strong>
+          ${badge}
         </div>
-        <span style="font-weight:700; color:#fff; text-align:right;">${sp} SP</span>
+        <div class="workload-bar-wrapper" style="flex:1; background:#e2e8f0; height:12px; border-radius:6px; overflow:hidden; position:relative;">
+          <div class="workload-bar-fill" style="width: ${pct}%; background:${cap === 'overloaded' ? '#ff5630' : '#36b37e'}; height:100%; border-radius:6px; transition:width 0.3s ease;"></div>
+        </div>
+        <span style="font-weight:700; color:#fff; text-align:right; width:60px; font-size:0.8rem;">${sp} SP</span>
       </div>
     `;
   });
@@ -1370,6 +1627,8 @@ function setupCreateIssueControls() {
   const issueTypeInput = document.getElementById('issue-type-input');
   const issuePriorityInput = document.getElementById('issue-priority-input');
   const issueSpInput = document.getElementById('issue-sp-input');
+  const issueEstHoursInput = document.getElementById('issue-est-hours-input');
+  const issueActualHoursInput = document.getElementById('issue-actual-hours-input');
   const issueStartDateInput = document.getElementById('issue-start-date-input');
   const issueEndDateInput = document.getElementById('issue-end-date-input');
   const issueAssigneeInput = document.getElementById('issue-assignee-input');
@@ -1391,9 +1650,11 @@ function setupCreateIssueControls() {
     issueIdHidden.value = '';
     document.getElementById('issue-modal-title').textContent = 'สร้างการ์ดงานใหม่ (Create Issue Card)';
     issueTitleInput.value = '';
-    issueTypeInput.value = 'Story';
+    issueTypeInput.value = 'Test Planning & Design';
     issuePriorityInput.value = 'High';
     issueSpInput.value = '3';
+    if (issueEstHoursInput) issueEstHoursInput.value = '8';
+    if (issueActualHoursInput) issueActualHoursInput.value = '0';
     issueStartDateInput.value = formatDateOffset(0);
     issueEndDateInput.value = formatDateOffset(7);
     issueAssigneeInput.value = '';
@@ -1437,6 +1698,9 @@ function setupCreateIssueControls() {
     if (hasError) return;
 
     const id = issueIdHidden.value;
+    const estVal = parseInt(issueEstHoursInput ? issueEstHoursInput.value : '8', 10) || 8;
+    const actVal = parseInt(issueActualHoursInput ? issueActualHoursInput.value : '0', 10) || 0;
+
     if (id) {
       // Edit mode
       const iss = issues.find(i => i.id === id);
@@ -1444,7 +1708,9 @@ function setupCreateIssueControls() {
         iss.title = title;
         iss.type = issueTypeInput.value;
         iss.priority = issuePriorityInput.value;
-        iss.sp = parseInt(issueSpInput.value, 10) || 0;
+        iss.sp = parseInt(issueSpInput.value, 10) || Math.ceil(estVal / 8) * 3;
+        iss.estHours = estVal;
+        iss.actualHours = actVal;
         iss.startDate = startDate;
         iss.endDate = endDate;
         iss.assignee = assignee;
@@ -1469,7 +1735,12 @@ function setupCreateIssueControls() {
         type: issueTypeInput.value,
         priority: issuePriorityInput.value,
         status: "To Do",
-        sp: parseInt(issueSpInput.value, 10) || 0,
+        sp: parseInt(issueSpInput.value, 10) || Math.ceil(estVal / 8) * 3,
+        estHours: estVal,
+        actualHours: actVal,
+        progress: 0,
+        isHelpRequested: false,
+        blockerReason: "",
         startDate,
         endDate,
         assignee,
@@ -1536,6 +1807,15 @@ function setupDrawerControls() {
   const fieldSP = document.getElementById('drawer-sp-field');
   const fieldEpic = document.getElementById('drawer-epic-select');
 
+  // New Tester Fields
+  const fieldEstHours = document.getElementById('drawer-est-hours-field');
+  const fieldActualHours = document.getElementById('drawer-actual-hours-field');
+  const fieldProgressSlider = document.getElementById('drawer-progress-slider');
+  const labelProgressVal = document.getElementById('drawer-progress-val');
+  const fieldHelpCheckbox = document.getElementById('drawer-help-checkbox');
+  const fieldBlockerReason = document.getElementById('drawer-blocker-field');
+  const groupBlocker = document.getElementById('drawer-blocker-group');
+
   const labelReporter = document.getElementById('drawer-reporter-label');
   const labelCreatedDate = document.getElementById('drawer-created-date-label');
   const subtasksList = document.getElementById('drawer-subtasks-list');
@@ -1546,6 +1826,22 @@ function setupDrawerControls() {
   const commentText = document.getElementById('comment-text-input');
   const commentsContainer = document.getElementById('drawer-comments-container');
 
+  if (fieldProgressSlider && labelProgressVal) {
+    fieldProgressSlider.addEventListener('input', (e) => {
+      labelProgressVal.textContent = e.target.value;
+    });
+  }
+
+  if (fieldStatus) {
+    fieldStatus.addEventListener('change', () => {
+      if (fieldStatus.value === 'Blocked') {
+        if (groupBlocker) groupBlocker.style.display = 'block';
+      } else {
+        if (groupBlocker) groupBlocker.style.display = 'none';
+      }
+    });
+  }
+
   window.openDefectDrawer = function(issueId) {
     const iss = issues.find(i => i.id === issueId);
     if (!iss) return;
@@ -1555,7 +1851,7 @@ function setupDrawerControls() {
     // Set fields
     fieldKey.textContent = iss.id;
     fieldTypeBadge.textContent = iss.type;
-    fieldTypeBadge.className = `badge-status ${iss.type.toLowerCase()}`;
+    fieldTypeBadge.className = `badge-status ${iss.type.toLowerCase().replace(/[^a-zA-Z]/g, '-')}`;
 
     fieldTitle.value = iss.title;
     fieldDetail.value = iss.detail || '';
@@ -1566,6 +1862,19 @@ function setupDrawerControls() {
     fieldEndDate.value = iss.endDate || '';
     fieldPriority.value = iss.priority || 'High';
     fieldSP.value = iss.sp || 0;
+
+    // Tester specific values
+    if (fieldEstHours) fieldEstHours.value = iss.estHours || 8;
+    if (fieldActualHours) fieldActualHours.value = iss.actualHours || 0;
+    if (fieldProgressSlider) {
+      fieldProgressSlider.value = iss.progress || 0;
+      if (labelProgressVal) labelProgressVal.textContent = iss.progress || 0;
+    }
+    if (fieldHelpCheckbox) fieldHelpCheckbox.checked = iss.isHelpRequested || false;
+    if (fieldBlockerReason) fieldBlockerReason.value = iss.blockerReason || '';
+    if (groupBlocker) {
+      groupBlocker.style.display = iss.status === 'Blocked' ? 'block' : 'none';
+    }
 
     labelReporter.textContent = iss.reporter || 'QA Reporter';
     labelCreatedDate.textContent = iss.createdDate || '-';
@@ -1727,6 +2036,17 @@ function setupDrawerControls() {
       iss.sp = parseInt(fieldSP.value, 10) || 0;
       iss.epicId = fieldEpic.value;
 
+      // Save Tester Fields
+      if (fieldEstHours) {
+        iss.estHours = parseInt(fieldEstHours.value, 10) || 8;
+        // Keep Story Points synced for compatibility (e.g. 8 hours = 3 SP)
+        iss.sp = Math.ceil(iss.estHours / 8) * 3;
+      }
+      if (fieldActualHours) iss.actualHours = parseInt(fieldActualHours.value, 10) || 0;
+      if (fieldProgressSlider) iss.progress = parseInt(fieldProgressSlider.value, 10) || 0;
+      if (fieldHelpCheckbox) iss.isHelpRequested = fieldHelpCheckbox.checked;
+      if (fieldBlockerReason) iss.blockerReason = fieldBlockerReason.value.trim();
+
       saveGlobalState('issues', issues);
       closeDrawer();
       renderActiveTab();
@@ -1767,4 +2087,225 @@ function escapeHTML(str) {
       '"': '&quot;'
     }[tag] || tag)
   );
+}
+
+// ==========================================================================
+// 10. TEST CASE SUMMARY REPORT CONTROLS & RENDERING (Act-Budget Excel Feature)
+// ==========================================================================
+function setupSummaryControls() {
+  const btnAdd = document.getElementById('btn-add-summary-row');
+  const btnExport = document.getElementById('btn-export-summary-csv');
+  const btnImport = document.getElementById('btn-import-summary-csv');
+  const btnPrint = document.getElementById('btn-print-summary');
+  const fileInput = document.getElementById('summary-file-input');
+
+  if (btnAdd) {
+    btnAdd.addEventListener('click', () => {
+      const newIdNumber = (summaryData.length + 1).toString().padStart(3, '0');
+      const newRow = {
+        id: `ACTbudget-${newIdNumber}`,
+        name: "โมดูลใหม่ / Feature",
+        env: "UAT",
+        assignedTo: "QA",
+        status: "Not Start",
+        total: 10,
+        pass: 0,
+        fail: 0,
+        inprogress: 0,
+        notStart: 10
+      };
+      summaryData.push(newRow);
+      saveGlobalState('summary', summaryData);
+      renderSummaryView();
+    });
+  }
+
+  if (btnExport) {
+    btnExport.addEventListener('click', exportSummaryCSV);
+  }
+
+  if (btnImport && fileInput) {
+    btnImport.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', importSummaryCSV);
+  }
+
+  if (btnPrint) {
+    btnPrint.addEventListener('click', () => window.print());
+  }
+}
+
+function renderSummaryView() {
+  const tbody = document.getElementById('summary-table-body');
+  const tfoot = document.getElementById('summary-table-foot');
+  if (!tbody || !tfoot) return;
+
+  tbody.innerHTML = '';
+  tfoot.innerHTML = '';
+
+  let totalExecuteSum = 0;
+  let passSum = 0;
+  let failSum = 0;
+  let inprogressSum = 0;
+  let notStartSum = 0;
+
+  summaryData.forEach((row, index) => {
+    totalExecuteSum += (parseInt(row.total, 10) || 0);
+    passSum += (parseInt(row.pass, 10) || 0);
+    failSum += (parseInt(row.fail, 10) || 0);
+    inprogressSum += (parseInt(row.inprogress, 10) || 0);
+    notStartSum += (parseInt(row.notStart, 10) || 0);
+
+    const passRatePct = row.total > 0 ? ((row.pass / row.total) * 100).toFixed(2) : '0.00';
+
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+    tr.style.background = index % 2 === 0 ? 'rgba(15, 23, 42, 0.2)' : 'rgba(30, 41, 59, 0.2)';
+
+    tr.innerHTML = `
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border);">
+        <input type="text" value="${escapeHTML(row.id)}" onchange="updateSummaryField(${index}, 'id', this.value)" style="width:100%; background:transparent; border:none; color:#3b82f6; font-weight:600; font-size:0.8rem;">
+      </td>
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border);">
+        <input type="text" value="${escapeHTML(row.name)}" onchange="updateSummaryField(${index}, 'name', this.value)" style="width:100%; background:transparent; border:none; color:#fff; font-size:0.8rem;">
+      </td>
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border);">
+        <input type="text" value="${escapeHTML(row.env || 'UAT')}" onchange="updateSummaryField(${index}, 'env', this.value)" style="width:100%; background:transparent; border:none; color:#cbd5e1; font-size:0.8rem;">
+      </td>
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border);">
+        <input type="text" value="${escapeHTML(row.assignedTo || '')}" onchange="updateSummaryField(${index}, 'assignedTo', this.value)" style="width:100%; background:transparent; border:none; color:#cbd5e1; font-size:0.8rem;">
+      </td>
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border);">
+        <select onchange="updateSummaryField(${index}, 'status', this.value)" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); color:#fff; padding:0.2rem; font-size:0.75rem; border-radius:4px;">
+          <option value="Pass" ${row.status === 'Pass' ? 'selected' : ''}>Pass</option>
+          <option value="In Progress" ${row.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+          <option value="Not Start" ${row.status === 'Not Start' ? 'selected' : ''}>Not Start</option>
+          <option value="Fail" ${row.status === 'Fail' ? 'selected' : ''}>Fail</option>
+        </select>
+      </td>
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
+        <input type="number" min="0" value="${row.total || 0}" onchange="updateSummaryField(${index}, 'total', parseInt(this.value, 10))" style="width:100%; text-align:center; background:transparent; border:none; color:#fff; font-weight:600; font-size:0.8rem;">
+      </td>
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
+        <input type="number" min="0" value="${row.pass || 0}" onchange="updateSummaryField(${index}, 'pass', parseInt(this.value, 10))" style="width:100%; text-align:center; background:transparent; border:none; color:#10b981; font-weight:600; font-size:0.8rem;">
+      </td>
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
+        <input type="number" min="0" value="${row.fail || 0}" onchange="updateSummaryField(${index}, 'fail', parseInt(this.value, 10))" style="width:100%; text-align:center; background:transparent; border:none; color:#ef4444; font-weight:600; font-size:0.8rem;">
+      </td>
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
+        <input type="number" min="0" value="${row.inprogress || 0}" onchange="updateSummaryField(${index}, 'inprogress', parseInt(this.value, 10))" style="width:100%; text-align:center; background:transparent; border:none; color:#f59e0b; font-weight:600; font-size:0.8rem;">
+      </td>
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
+        <input type="number" min="0" value="${row.notStart || 0}" onchange="updateSummaryField(${index}, 'notStart', parseInt(this.value, 10))" style="width:100%; text-align:center; background:transparent; border:none; color:#64748b; font-weight:600; font-size:0.8rem;">
+      </td>
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center; font-weight:700; color:#a855f7;">
+        ${passRatePct}%
+      </td>
+      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
+        <button class="btn btn-defect btn-icon-sm" onclick="deleteSummaryRow(${index})" style="padding:0.2rem 0.35rem; background:#ff5630; border:none; color:#fff;" title="ลบแถว">
+          <i data-lucide="trash-2" style="width:12px; height:12px;"></i>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Calculate Overall Totals
+  const overallPassRatePct = totalExecuteSum > 0 ? ((passSum / totalExecuteSum) * 100).toFixed(2) : '0.00';
+  const notStartPct = totalExecuteSum > 0 ? ((notStartSum / totalExecuteSum) * 100).toFixed(2) : '0.00';
+
+  tfoot.innerHTML = `
+    <tr>
+      <td colspan="5" style="padding:0.6rem; border:1px solid var(--glass-border); text-align:right;">TOTAL (สรุปรวมทั้งหมด):</td>
+      <td style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; color:#3b82f6;">${totalExecuteSum}</td>
+      <td style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; color:#10b981;">${passSum}</td>
+      <td style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; color:#ef4444;">${failSum}</td>
+      <td style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; color:#f59e0b;">${inprogressSum}</td>
+      <td style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; color:#94a3b8;">${notStartSum}</td>
+      <td style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; color:#a855f7;">${overallPassRatePct}%</td>
+      <td style="padding:0.6rem; border:1px solid var(--glass-border);"></td>
+    </tr>
+  `;
+
+  // Update KPI Cards
+  const kpiTotal = document.getElementById('kpi-total-execute');
+  const kpiPassed = document.getElementById('kpi-passed');
+  const kpiNotStart = document.getElementById('kpi-not-start');
+  const kpiPassRate = document.getElementById('kpi-pass-rate');
+
+  if (kpiTotal) kpiTotal.textContent = totalExecuteSum;
+  if (kpiPassed) kpiPassed.innerHTML = `${passSum} <span style="font-size:0.85rem; font-weight:normal;">(${overallPassRatePct}%)</span>`;
+  if (kpiNotStart) kpiNotStart.innerHTML = `${notStartSum} <span style="font-size:0.85rem; font-weight:normal;">(${notStartPct}%)</span>`;
+  if (kpiPassRate) kpiPassRate.textContent = `${overallPassRatePct}%`;
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+window.updateSummaryField = function(index, field, value) {
+  if (summaryData[index]) {
+    summaryData[index][field] = value;
+    saveGlobalState('summary', summaryData);
+    renderSummaryView();
+  }
+};
+
+window.deleteSummaryRow = function(index) {
+  if (confirm("คุณต้องการลบรายการแถวนี้ใช่หรือไม่?")) {
+    summaryData.splice(index, 1);
+    saveGlobalState('summary', summaryData);
+    renderSummaryView();
+  }
+};
+
+function exportSummaryCSV() {
+  let csv = "TC ID,Test Case Name,Environment,Assigned To,Status,Total Execute,Pass,Fail,Inprogress,Not Start,Pass Rate (%)\r\n";
+  summaryData.forEach(row => {
+    const rate = row.total > 0 ? ((row.pass / row.total) * 100).toFixed(2) : '0.00';
+    csv += `"${row.id}","${row.name.replace(/"/g, '""')}","${row.env || 'UAT'}","${row.assignedTo || ''}","${row.status}",${row.total || 0},${row.pass || 0},${row.fail || 0},${row.inprogress || 0},${row.notStart || 0},"${rate}%"\r\n`;
+  });
+  downloadCSV(csv, `TestCase_Summary_Report_${activeProjectId}.csv`);
+}
+
+function importSummaryCSV(evt) {
+  const file = evt.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    try {
+      if (file.name.endsWith('.json')) {
+        summaryData = JSON.parse(text);
+      } else {
+        // Parse CSV
+        const lines = text.split(/\r\n|\n/);
+        const parsed = [];
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          const cols = line.split(',').map(c => c.replace(/^"|"$/g, '').trim());
+          if (cols.length >= 5) {
+            parsed.push({
+              id: cols[0] || `TC-${i}`,
+              name: cols[1] || 'Test Case',
+              env: cols[2] || 'UAT',
+              assignedTo: cols[3] || '',
+              status: cols[4] || 'Not Start',
+              total: parseInt(cols[5], 10) || 0,
+              pass: parseInt(cols[6], 10) || 0,
+              fail: parseInt(cols[7], 10) || 0,
+              inprogress: parseInt(cols[8], 10) || 0,
+              notStart: parseInt(cols[9], 10) || 0
+            });
+          }
+        }
+        if (parsed.length > 0) summaryData = parsed;
+      }
+      saveGlobalState('summary', summaryData);
+      renderSummaryView();
+      alert("นำเข้าข้อมูล Test Case Summary สำเร็จเรียบร้อย!");
+    } catch (err) {
+      alert("อ่านไฟล์นำเข้าผิดพลาด: " + err.message);
+    }
+  };
+  reader.readAsText(file);
 }

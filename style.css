@@ -513,7 +513,7 @@ body {
    ========================================================================== */
 .board-columns-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1rem;
   flex: 1;
   overflow: hidden;
@@ -1165,4 +1165,90 @@ input[type="date"]:focus {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Excel Summary Table Styling & Print Rules */
+.excel-summary-table input[type="text"]:focus,
+.excel-summary-table input[type="number"]:focus,
+.excel-summary-table select:focus {
+  outline: 1px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.15) !important;
+/* Tester Team Management Board Custom Styles */
+.kanban-card.blocked-active {
+  border-left: 4px solid var(--danger) !important;
+  background: #fff5f5 !important;
+  animation: blockerPulse 2s infinite alternate;
+}
+@keyframes blockerPulse {
+  0% { box-shadow: 0 0 3px rgba(239, 68, 68, 0.2); }
+  100% { box-shadow: 0 0 12px rgba(239, 68, 68, 0.5); }
+}
+
+.kanban-card.help-requested {
+  animation: helpPulse 2s infinite alternate;
+  border-right: 4px solid #f59e0b !important;
+}
+@keyframes helpPulse {
+  0% { box-shadow: 0 0 3px rgba(245, 158, 11, 0.2); }
+  100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+}
+
+.card-progress-bar-bg {
+  background: #ebecf0;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 0.3rem;
+  width: 100%;
+}
+.card-progress-bar-fill {
+  background: #36b37e;
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.tester-status-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  margin-left: 0.3rem;
+  display: inline-block;
+}
+.tester-status-badge.available {
+  background: #e3fcf0;
+  color: #36b37e;
+}
+.tester-status-badge.overloaded {
+  background: #ffebe6;
+  color: #ff5630;
+  animation: overloadPulse 1.5s infinite alternate;
+}
+@keyframes overloadPulse {
+  0% { box-shadow: 0 0 2px rgba(255, 86, 48, 0.2); }
+  100% { box-shadow: 0 0 8px rgba(255, 86, 48, 0.5); }
+}
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .app-sidebar, .main-header, .btn, .sidebar-footer {
+    display: none !important;
+  }
+  .app-main, .tab-view.active {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    display: block !important;
+  }
+  .excel-summary-table {
+    color: #000 !important;
+    border: 1px solid #333 !important;
+  }
+  .excel-summary-table input {
+    color: #000 !important;
+  }
 }
