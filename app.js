@@ -202,28 +202,20 @@ let activeIssueForDrawer = null;
 const mockAssignees = ["Ynok", "Sai", "Jud", "สมชาย คิวเอ"];
 
 function getAllTesterNames() {
-  const namesSet = new Set(mockAssignees);
-  if (Array.isArray(issues)) {
-    issues.forEach(i => {
-      if (i.assignee && i.assignee.trim()) {
-        namesSet.add(i.assignee.trim());
-      }
-    });
-  }
-  if (Array.isArray(summaryData)) {
-    summaryData.forEach(s => {
-      if (s.assignedTo && s.assignedTo.trim()) {
-        namesSet.add(s.assignedTo.trim());
-      }
-    });
-  }
+  let customTesters = [];
   try {
-    const customTesters = JSON.parse(localStorage.getItem('jira_custom_testers') || '[]');
-    customTesters.forEach(n => {
-      if (n && n.trim()) namesSet.add(n.trim());
-    });
-  } catch(e){}
-  return Array.from(namesSet);
+    const stored = localStorage.getItem('jira_custom_testers');
+    if (stored) {
+      customTesters = JSON.parse(stored);
+    } else {
+      // Seed default list if not initialized
+      customTesters = [...mockAssignees];
+      localStorage.setItem('jira_custom_testers', JSON.stringify(customTesters));
+    }
+  } catch(e) {
+    customTesters = [...mockAssignees];
+  }
+  return customTesters.map(n => n.trim()).filter(Boolean);
 }
 
 function formatDateOffset(daysOffset) {
@@ -2071,7 +2063,7 @@ window.populateTesterFilterOptions = function() {
   if (!select) return;
   const currentVal = select.value;
   select.innerHTML = '<option value="">👤 Tester ทั้งหมด</option>';
-  mockAssignees.forEach(name => {
+  getAllTesterNames().forEach(name => {
     const opt = document.createElement('option');
     opt.value = name;
     const cap = getTesterCapacityStatus(name);
