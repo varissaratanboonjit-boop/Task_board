@@ -583,6 +583,24 @@
 
         <div class="settings-grid">
           
+          <!-- Team Members / Testers Management Card -->
+          <div class="settings-card glassmorphism">
+            <div class="card-header">
+              <i data-lucide="users" style="color: #8b5cf6; width: 22px; height: 22px;"></i>
+              <h4>จัดการรายชื่อทีมงาน / Tester (Team Members Manager)</h4>
+            </div>
+            <p class="subtitle" style="margin-top:0.4rem; margin-bottom:0.8rem;">
+              เพิ่ม แก้ไข หรือลบรายชื่อผู้รับผิดชอบงานในทีม เพื่อใช้เป็นตัวเลือกในการ Assign งานและกรองข้อมูลทั้งระบบ
+            </p>
+            <div style="display:flex; gap:0.5rem; margin-bottom:0.8rem;">
+              <input type="text" id="new-tester-name-input" placeholder="พิมพ์ชื่อ Tester / สมาชิกใหม่..." style="flex:1;">
+              <button class="btn btn-primary btn-sm" id="btn-add-tester"><i data-lucide="user-plus"></i> เพิ่มสมาชิก</button>
+            </div>
+            <div id="testers-chips-container" style="display:flex; flex-wrap:wrap; gap:0.5rem; min-height:60px; max-height:160px; overflow-y:auto; padding:0.6rem; background:var(--bg-surface-secondary); border:1px solid var(--card-border); border-radius:10px;">
+              <!-- Tester Chips dynamically rendered -->
+            </div>
+          </div>
+
           <!-- Database Backup Card -->
           <div class="settings-card">
             <div class="card-header">
@@ -833,7 +851,14 @@
         <div class="form-row">
           <div class="form-group">
             <label for="issue-assignee-input">ชื่อผู้รับผิดชอบ (Assignee) *</label>
-            <input type="text" id="issue-assignee-input" placeholder="ระบุชื่อผู้รับผิดชอบ..." required autocomplete="off">
+            <div style="display:flex; gap:0.4rem;">
+              <select id="issue-assignee-input" style="flex:1;" required>
+                <!-- Dynamically populated assignees -->
+              </select>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-quick-add-tester" title="เพิ่มชื่อผู้รับผิดชอบใหม่" style="padding:0 0.6rem;">
+                <i data-lucide="user-plus"></i>
+              </button>
+            </div>
             <span class="error-msg">กรุณาระบุผู้รับผิดชอบ</span>
           </div>
           <div class="form-group" id="issue-epic-group">
@@ -932,8 +957,10 @@
             </div>
 
             <div class="form-group">
-              <label>ชื่อผู้รับผิดชอบ (Assignee)</label>
-              <input type="text" id="drawer-assignee-field" style="margin-top:0.25rem;">
+              <label for="drawer-assignee-field">ชื่อผู้รับผิดชอบ (Assignee)</label>
+              <select id="drawer-assignee-field" style="margin-top:0.25rem;">
+                <!-- Dynamically populated options -->
+              </select>
             </div>
 
             <div class="form-row">

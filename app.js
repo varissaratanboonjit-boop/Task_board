@@ -200,10 +200,190 @@ let activeIssueForDrawer = null;
 
 // Mock Names & Seed Helper
 const mockAssignees = ["Ynok", "Sai", "Jud", "สมชาย คิวเอ"];
+
+function getAllTesterNames() {
+  const namesSet = new Set(mockAssignees);
+  if (Array.isArray(issues)) {
+    issues.forEach(i => {
+      if (i.assignee && i.assignee.trim()) {
+        namesSet.add(i.assignee.trim());
+      }
+    });
+  }
+  if (Array.isArray(summaryData)) {
+    summaryData.forEach(s => {
+      if (s.assignedTo && s.assignedTo.trim()) {
+        namesSet.add(s.assignedTo.trim());
+      }
+    });
+  }
+  try {
+    const customTesters = JSON.parse(localStorage.getItem('jira_custom_testers') || '[]');
+    customTesters.forEach(n => {
+      if (n && n.trim()) namesSet.add(n.trim());
+    });
+  } catch(e){}
+  return Array.from(namesSet);
+}
+
 function formatDateOffset(daysOffset) {
   const d = new Date();
   d.setDate(d.getDate() + daysOffset);
   return d.toISOString().split('T')[0];
+}
+
+// Team Member & Assignee Helpers
+window.populateAssigneeDropdowns = function(selectedVal) {
+  const issueAssigneeInput = document.getElementById('issue-assignee-input');
+  const drawerAssigneeField = document.getElementById('drawer-assignee-field');
+  const allNames = getAllTesterNames();
+
+  [issueAssigneeInput, drawerAssigneeField].forEach(select => {
+    if (!select) return;
+    const cur = selectedVal !== undefined ? selectedVal : select.value;
+    select.innerHTML = '<option value="">-- เลือกผู้รับผิดชอบ (Assignee) --</option>';
+    allNames.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      if (name === cur) opt.selected = true;
+      select.appendChild(opt);
+    });
+    if (cur) select.value = cur;
+  });
+};
+
+window.renderTeamMembersManager = function() {
+  const container = document.getElementById('testers-chips-container');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const allNames = getAllTesterNames();
+
+  allNames.forEach(name => {
+    const chip = document.createElement('div');
+    chip.style.cssText = 'display:inline-flex; align-items:center; gap:0.4rem; background:var(--bg-surface); border:1px solid var(--card-border); padding:0.3rem 0.7rem; border-radius:20px; font-size:0.8rem; font-weight:600; color:var(--color-text); box-shadow:0 2px 4px rgba(0,0,0,0.03);';
+    
+    const text = document.createElement('span');
+    text.textContent = name;
+    chip.appendChild(text);
+
+    // Edit button
+    const btnEdit = document.createElement('button');
+    btnEdit.innerHTML = '✏️';
+    btnEdit.title = 'แก้ไขชื่อสมาชิก';
+    btnEdit.style.cssText = 'background:none; border:none; cursor:pointer; font-size:0.75rem; padding:0 0.1rem; opacity:0.75; transition:opacity 0.2s;';
+    btnEdit.onmouseenter = () => btnEdit.style.opacity = '1';
+    btnEdit.onmouseleave = () => btnEdit.style.opacity = '0.75';
+    btnEdit.onclick = () => {
+      const newName = prompt('แก้ไขชื่อสมาชิกทีม Tester:', name);
+      if (newName && newName.trim() && newName.trim() !== name) {
+        renameTester(name, newName.trim());
+      }
+    };
+    chip.appendChild(btnEdit);
+
+    // Delete button
+    const btnDel = document.createElement('button');
+    btnDel.innerHTML = '❌';
+    btnDel.title = 'ลบรายชื่อสมาชิก';
+    btnDel.style.cssText = 'background:none; border:none; cursor:pointer; font-size:0.75rem; padding:0 0.1rem; opacity:0.75; transition:opacity 0.2s;';
+    btnDel.onmouseenter = () => btnDel.style.opacity = '1';
+    btnDel.onmouseleave = () => btnDel.style.opacity = '0.75';
+    btnDel.onclick = () => {
+      if (confirm(`คุณต้องการลบรายชื่อ "${name}" ออกจากระบบใช่หรือไม่?`)) {
+        deleteTester(name);
+      }
+    };
+    chip.appendChild(btnDel);
+
+    container.appendChild(chip);
+  });
+};
+
+function renameTester(oldName, newName) {
+  let customTesters = JSON.parse(localStorage.getItem('jira_custom_testers') || '[]');
+  const idx = customTesters.indexOf(oldName);
+  if (idx !== -1) {
+    customTesters[idx] = newName;
+  } else {
+    customTesters.push(newName);
+  }
+  localStorage.setItem('jira_custom_testers', JSON.stringify(customTesters));
+
+  issues.forEach(i => {
+    if (i.assignee === oldName) i.assignee = newName;
+  });
+  localStorage.setItem('jira_issues', JSON.stringify(issues));
+
+  summaryData.forEach(s => {
+    if (s.assignedTo === oldName) s.assignedTo = newName;
+  });
+  localStorage.setItem('jira_summary_data', JSON.stringify(summaryData));
+
+  refreshAllTesterLists();
+  if (typeof renderBoardView === 'function') renderBoardView();
+  if (typeof renderCalendarView === 'function') renderCalendarView();
+}
+
+function deleteTester(nameToDelete) {
+  let customTesters = JSON.parse(localStorage.getItem('jira_custom_testers') || '[]');
+  customTesters = customTesters.filter(n => n !== nameToDelete);
+  localStorage.setItem('jira_custom_testers', JSON.stringify(customTesters));
+
+  refreshAllTesterLists();
+}
+
+window.refreshAllTesterLists = function() {
+  populateAssigneeDropdowns();
+  populateCalendarFilters();
+  populateTesterFilterOptions();
+  renderTeamMembersManager();
+  if (typeof renderWorkloadBars === 'function') renderWorkloadBars();
+};
+
+function setupTeamMembersManagerControls() {
+  const btnAddTester = document.getElementById('btn-add-tester');
+  const inputNewTester = document.getElementById('new-tester-name-input');
+  const btnQuickAddTester = document.getElementById('btn-quick-add-tester');
+
+  function addNewTester(name) {
+    if (!name || !name.trim()) return;
+    const cleanName = name.trim();
+    let customTesters = JSON.parse(localStorage.getItem('jira_custom_testers') || '[]');
+    if (!customTesters.includes(cleanName)) {
+      customTesters.push(cleanName);
+      localStorage.setItem('jira_custom_testers', JSON.stringify(customTesters));
+    }
+    refreshAllTesterLists();
+  }
+
+  if (btnAddTester && inputNewTester) {
+    btnAddTester.addEventListener('click', () => {
+      const name = inputNewTester.value;
+      if (name && name.trim()) {
+        addNewTester(name);
+        inputNewTester.value = '';
+      }
+    });
+    inputNewTester.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        btnAddTester.click();
+      }
+    });
+  }
+
+  if (btnQuickAddTester) {
+    btnQuickAddTester.addEventListener('click', () => {
+      const name = prompt('กรุณาระบุชื่อ Tester / ผู้รับผิดชอบงานใหม่:');
+      if (name && name.trim()) {
+        addNewTester(name);
+        const issueAssigneeInput = document.getElementById('issue-assignee-input');
+        if (issueAssigneeInput) issueAssigneeInput.value = name.trim();
+      }
+    });
+  }
 }
 
 // ==========================================================================
@@ -446,11 +626,13 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSidebarNavigation();
   setupProjectControls();
   setupSettingsControls();
+  setupTeamMembersManagerControls();
   setupCreateIssueControls();
   setupBacklogSprintControls();
   setupDrawerControls();
   setupSummaryControls();
   setupCalendarControls();
+  refreshAllTesterLists();
   
   // Render default active tab
   renderActiveTab();
@@ -1336,7 +1518,7 @@ function populateCalendarFilters() {
   const currentProjectVal = projectSelect.value;
 
   assigneeSelect.innerHTML = '<option value="">👤 เลือกตาม Tester</option>';
-  mockAssignees.forEach(name => {
+  getAllTesterNames().forEach(name => {
     assigneeSelect.innerHTML += `<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`;
   });
 
@@ -2055,7 +2237,7 @@ function renderWorkloadBars() {
   container.innerHTML = '';
 
   const workloads = {};
-  mockAssignees.forEach(name => workloads[name] = 0);
+  getAllTesterNames().forEach(name => workloads[name] = 0);
   workloads['Unassigned'] = 0;
 
   issues.forEach(i => {
@@ -2543,7 +2725,8 @@ function setupDrawerControls() {
     fieldDetail.value = iss.detail || '';
     fieldRemark.value = iss.remark || '';
     fieldStatus.value = iss.status || 'To Do';
-    fieldAssignee.value = iss.assignee || '';
+    populateAssigneeDropdowns(iss.assignee || '');
+    if (fieldAssignee) fieldAssignee.value = iss.assignee || '';
     fieldStartDate.value = iss.startDate || '';
     fieldEndDate.value = iss.endDate || '';
     fieldPriority.value = iss.priority || 'High';
