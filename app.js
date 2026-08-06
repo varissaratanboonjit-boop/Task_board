@@ -1053,7 +1053,7 @@ function renderGlobalRoadmap() {
     projRow.style.background = 'rgba(99, 102, 241, 0.05)';
     projRow.style.borderLeft = '4px solid #6366f1';
     projRow.innerHTML = `
-      <div class="roadmap-row-label" style="font-weight:700; color:#fff; font-size:0.8rem;">
+      <div class="roadmap-row-label" style="font-weight:700; color:var(--color-text); font-size:0.8rem;">
         <i data-lucide="briefcase" style="width:14px; height:14px; color:#6366f1; margin-right:0.3rem; vertical-align:middle;"></i>
         <span>${escapeHTML(p.name)}</span>
       </div>
@@ -1129,21 +1129,21 @@ function renderHomeProjectCards() {
     card.className = 'glassmorphism';
     card.style.padding = '1rem';
     card.style.borderRadius = '10px';
-    card.style.border = '1px solid rgba(255,255,255,0.06)';
-    card.style.background = 'rgba(255,255,255,0.02)';
+    card.style.border = '1px solid #dfe1e6';
+    card.style.background = '#f4f5f7';
     card.style.display = 'flex';
     card.style.flexDirection = 'column';
     card.style.gap = '0.5rem';
 
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <h5 style="margin:0; font-weight:700; color:#fff; font-size:0.85rem; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:200px;" title="${escapeHTML(p.name)}">${escapeHTML(p.name)}</h5>
+        <h5 style="margin:0; font-weight:700; color:var(--color-text); font-size:0.85rem; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:200px;" title="${escapeHTML(p.name)}">${escapeHTML(p.name)}</h5>
         <span style="font-size:0.65rem; color:#6366f1; background:rgba(99, 102, 241, 0.1); padding:0.15rem 0.4rem; border-radius:4px; font-weight:700;">ID: ${p.id}</span>
       </div>
       
       <div style="font-size:0.75rem; color:var(--color-text-muted);">
         <span>ความก้าวหน้าโครงการ: ${progress}%</span>
-        <div style="background:rgba(255,255,255,0.1); height:8px; border-radius:4px; overflow:hidden; margin-top:0.25rem;">
+        <div style="background:rgba(0,0,0,0.08); height:8px; border-radius:4px; overflow:hidden; margin-top:0.25rem;">
           <div style="background:#10b981; width:${progress}%; height:100%; border-radius:4px;"></div>
         </div>
       </div>
@@ -1154,11 +1154,11 @@ function renderHomeProjectCards() {
       </div>
 
       <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--color-text-muted);">
-        <span>เสร็จสิ้น: <strong>${doneCount}/${totalCount} ใบ</strong></span>
+        <span>เสร็จสิ้น: <strong style="color:var(--color-text);">${doneCount}/${totalCount} ใบ</strong></span>
       </div>
 
       <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
-        <button class="btn btn-secondary btn-sm" onclick="selectProjectAndRedirect('${p.id}', 'roadmap')" style="flex:1; font-size:0.7rem; padding:0.3rem 0.5rem; border:1px solid rgba(255,255,255,0.1); background:transparent; color:#fff; cursor:pointer; border-radius:4px;">แผนงาน (Roadmap)</button>
+        <button class="btn btn-secondary btn-sm" onclick="selectProjectAndRedirect('${p.id}', 'roadmap')" style="flex:1; font-size:0.7rem; padding:0.3rem 0.5rem; border:1px solid #dfe1e6; background:#fff; color:var(--color-text); cursor:pointer; border-radius:4px;">แผนงาน (Roadmap)</button>
         <button class="btn btn-primary btn-sm" onclick="selectProjectAndRedirect('${p.id}', 'board')" style="flex:1; font-size:0.7rem; padding:0.3rem 0.5rem; border:none; background:#3b82f6; color:#fff; cursor:pointer; border-radius:4px;">บอร์ดคัมบัง</button>
       </div>
     `;
