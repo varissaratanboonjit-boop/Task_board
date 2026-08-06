@@ -7,6 +7,160 @@ let issues = [];
 let comments = {};
 let summaryData = [];
 
+// Firebase Real-time Sync Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAsaD3_placeholder_key_for_user_convenience",
+  authDomain: "quantum-jira-testing.firebaseapp.com",
+  databaseURL: "https://quantum-jira-testing-default-rtdb.firebaseio.com",
+  projectId: "quantum-jira-testing",
+  storageBucket: "quantum-jira-testing.appspot.com",
+  messagingSenderId: "1234567890",
+  appId: "1:1234567890:web:abc123xyz"
+};
+let dbRef = null;
+let isRemoteUpdate = false;
+
+function initFirebaseSync() {
+  const checkbox = document.getElementById('sync-enabled-checkbox');
+  const roomInput = document.getElementById('sync-room-input');
+  const configRow = document.getElementById('sync-config-row');
+  const statusBox = document.getElementById('sync-status-box');
+  const statusLabel = document.getElementById('sync-status-label');
+
+  if (!checkbox) return;
+
+  const isEnabled = checkbox.checked;
+  
+  // Save settings state to localStorage
+  localStorage.setItem('sync_enabled', isEnabled ? 'true' : 'false');
+
+  if (!isEnabled) {
+    if (configRow) configRow.style.display = 'none';
+    if (statusBox) statusBox.style.display = 'none';
+    if (dbRef) {
+      dbRef.off();
+      dbRef = null;
+    }
+    return;
+  }
+
+  if (configRow) configRow.style.display = 'flex';
+  if (statusBox) statusBox.style.display = 'block';
+
+  const roomId = roomInput ? roomInput.value.trim() : '';
+  if (!roomId) {
+    if (statusLabel) {
+      statusLabel.textContent = "🔴 ออฟไลน์ (ระบุรหัสห้องทำงานเพื่อเชื่อมต่อ)";
+      statusLabel.style.color = "#ef4444";
+    }
+    if (dbRef) {
+      dbRef.off();
+      dbRef = null;
+    }
+    return;
+  }
+
+  // Save room ID to localStorage
+  localStorage.setItem('sync_room_id', roomId);
+
+  if (statusLabel) {
+    statusLabel.textContent = "🟡 กำลังเชื่อมต่อ...";
+    statusLabel.style.color = "#ffe68a";
+  }
+
+  try {
+    if (typeof firebase === 'undefined') {
+      throw new Error("ระบบ Firebase ยังโหลดไม่เสร็จสมบูรณ์");
+    }
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    if (dbRef) {
+      dbRef.off();
+    }
+
+    dbRef = firebase.database().ref(`rooms/${roomId}`);
+
+    // Listen to value updates
+    dbRef.on('value', (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        isRemoteUpdate = true;
+        
+        if (val.projects) {
+          projects = val.projects;
+          localStorage.setItem('jira_projects', JSON.stringify(projects));
+        }
+        if (val.epics) {
+          localStorage.setItem('jira_epics', JSON.stringify(val.epics));
+        }
+        if (val.sprints) {
+          localStorage.setItem('jira_sprints', JSON.stringify(val.sprints));
+        }
+        if (val.issues) {
+          localStorage.setItem('jira_issues', JSON.stringify(val.issues));
+        }
+        if (val.comments) {
+          comments = val.comments;
+          localStorage.setItem('jira_comments', JSON.stringify(comments));
+        }
+        if (val.summaryData) {
+          summaryData = val.summaryData;
+          localStorage.setItem('jira_summary_data', JSON.stringify(summaryData));
+        }
+
+        // Reload data from local storage
+        loadAllState();
+        renderActiveTab();
+
+        isRemoteUpdate = false;
+
+        if (statusLabel) {
+          statusLabel.innerHTML = `🟢 เชื่อมต่อสำเร็จ (ห้อง: <span style="color:#6366f1; font-weight:700;">${escapeHTML(roomId)}</span>)`;
+          statusLabel.style.color = "#10b981";
+        }
+      } else {
+        // First connection to this room: upload current state
+        pushLocalStateToCloud();
+        if (statusLabel) {
+          statusLabel.innerHTML = `🟢 สร้างห้องใหม่สำเร็จ (ห้อง: <span style="color:#6366f1; font-weight:700;">${escapeHTML(roomId)}</span>)`;
+          statusLabel.style.color = "#10b981";
+        }
+      }
+    }, (err) => {
+      if (statusLabel) {
+        statusLabel.textContent = `🔴 เชื่อมต่อล้มเหลว: ${err.message}`;
+        statusLabel.style.color = "#ef4444";
+      }
+    });
+
+  } catch (err) {
+    if (statusLabel) {
+      statusLabel.textContent = `🔴 ข้อผิดพลาด: ${err.message}`;
+      statusLabel.style.color = "#ef4444";
+    }
+  }
+}
+
+function pushLocalStateToCloud() {
+  if (!dbRef || isRemoteUpdate) return;
+  const allEpics = JSON.parse(localStorage.getItem('jira_epics') || '[]');
+  const allSprints = JSON.parse(localStorage.getItem('jira_sprints') || '[]');
+  const allIssues = JSON.parse(localStorage.getItem('jira_issues') || '[]');
+
+  dbRef.set({
+    projects,
+    epics: allEpics,
+    sprints: allSprints,
+    issues: allIssues,
+    comments,
+    summaryData
+  }).catch(err => {
+    console.error("Cloud push failed:", err);
+  });
+}
+
 // Active View Tab State
 let activeTab = 'roadmap';
 let activeEpicFilter = null; // Filter board/backlog by Epic
@@ -222,7 +376,6 @@ function loadAllState() {
   summaryData = JSON.parse(localStorage.getItem('jira_summary_data') || '[]');
 }
 
-// Save back to LocalStorage
 function saveGlobalState(type, data) {
   if (type === 'epics') {
     const all = JSON.parse(localStorage.getItem('jira_epics') || '[]');
@@ -243,6 +396,10 @@ function saveGlobalState(type, data) {
     localStorage.setItem('jira_comments', JSON.stringify(data));
   } else if (type === 'summary') {
     localStorage.setItem('jira_summary_data', JSON.stringify(data));
+  }
+
+  if (dbRef && !isRemoteUpdate) {
+    pushLocalStateToCloud();
   }
 }
 
@@ -450,6 +607,9 @@ function setupProjectControls() {
         
         // Reload and render
         loadAllState();
+        if (dbRef && !isRemoteUpdate) {
+          pushLocalStateToCloud();
+        }
         populateProjects();
         renderActiveTab();
       }
@@ -563,6 +723,37 @@ function setupSettingsControls() {
     });
     downloadCSV(csv, `jira_sprints_report_${activeProjectId}.csv`);
   });
+
+  // Real-Time Sync Bindings
+  const syncCheckbox = document.getElementById('sync-enabled-checkbox');
+  const syncRoomInput = document.getElementById('sync-room-input');
+  const btnConnectSync = document.getElementById('btn-connect-sync');
+
+  if (syncCheckbox) {
+    // Load from localStorage
+    const savedEnabled = localStorage.getItem('sync_enabled') === 'true';
+    const savedRoomId = localStorage.getItem('sync_room_id') || '';
+
+    syncCheckbox.checked = savedEnabled;
+    if (syncRoomInput) syncRoomInput.value = savedRoomId;
+
+    // Trigger initial state
+    if (savedEnabled) {
+      document.getElementById('sync-config-row').style.display = 'flex';
+      document.getElementById('sync-status-box').style.display = 'block';
+      setTimeout(initFirebaseSync, 800); // Allow firebase script to be loaded
+    }
+
+    syncCheckbox.addEventListener('change', () => {
+      initFirebaseSync();
+    });
+
+    if (btnConnectSync) {
+      btnConnectSync.addEventListener('click', () => {
+        initFirebaseSync();
+      });
+    }
+  }
 }
 
 function downloadCSV(csvContent, filename) {

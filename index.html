@@ -8,7 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Lucide Icons -->
+  <!-- Firebase Compat SDKs for Real-Time Sync -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -512,6 +514,30 @@
                 <i data-lucide="download"></i>
                 <span>ส่งออกสถิติ Sprints (Sprints CSV)</span>
               </button>
+            </div>
+          </div>
+
+          <!-- Real-Time Sync Card -->
+          <div class="settings-card glassmorphism">
+            <div class="card-header">
+              <i data-lucide="wifi" style="color: #6366f1; width: 22px; height: 22px;"></i>
+              <h4>ระบบซิงค์ทีมเรียลไทม์ (Real-Time Team Sync)</h4>
+            </div>
+            <p class="subtitle" style="margin-top:0.4rem; margin-bottom:1rem;">
+              เปิดใช้งานการเชื่อมโยงระบบเข้ากับฐานข้อมูลคลาวด์ เพื่อให้สมาชิกในทีมทุกคนเห็นการย้ายการ์ดงานและแชทถามตอบตรงกันแบบทันที (Real-time Sync) โดยไม่ต้องแชร์ไฟล์ JSON
+            </p>
+            <div style="display:flex; flex-direction:column; gap:0.6rem;">
+              <label class="checkbox-label" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                <input type="checkbox" id="sync-enabled-checkbox" style="width:auto; margin:0;">
+                <span>เปิดใช้งานคลาวด์ซิงค์ (Enable Cloud Sync)</span>
+              </label>
+              <div id="sync-config-row" style="display:none; gap:0.6rem; margin-top:0.4rem; align-items:center;">
+                <input type="text" id="sync-room-input" placeholder="ตัวอย่าง: room-budget-qa-2026" style="flex:1; padding:0.4rem; font-size:0.8rem; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:#fff; height:36px;">
+                <button class="btn btn-primary" id="btn-connect-sync" style="padding:0 0.8rem; height:36px; display:flex; align-items:center;">เชื่อมต่อ</button>
+              </div>
+              <div id="sync-status-box" style="margin-top:0.4rem; font-size:0.75rem; color:var(--color-text-muted); display:none;">
+                สถานะการเชื่อมต่อ: <strong id="sync-status-label" style="color:#ef4444;">🔴 ออฟไลน์</strong>
+              </div>
             </div>
           </div>
 
