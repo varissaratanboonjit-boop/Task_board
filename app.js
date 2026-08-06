@@ -194,6 +194,7 @@ function pushLocalStateToCloud() {
 
 // Active View Tab State
 let activeTab = 'home';
+let currentCalendarDate = new Date();
 let activeEpicFilter = null; // Filter board/backlog by Epic
 let activeIssueForDrawer = null;
 
@@ -449,6 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupBacklogSprintControls();
   setupDrawerControls();
   setupSummaryControls();
+  setupCalendarControls();
   
   // Render default active tab
   renderActiveTab();
@@ -458,6 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupSidebarNavigation() {
   const tabs = {
     'tab-home': 'home',
+    'tab-calendar': 'calendar',
     'tab-roadmap': 'roadmap',
     'tab-backlog': 'backlog',
     'tab-board': 'board',
@@ -503,6 +506,9 @@ function renderActiveTab() {
   if (activeTab === 'home') {
     document.getElementById('view-home').classList.add('active');
     renderHomeView();
+  } else if (activeTab === 'calendar') {
+    document.getElementById('view-calendar').classList.add('active');
+    renderCalendarView();
   } else if (activeTab === 'roadmap') {
     document.getElementById('view-roadmap').classList.add('active');
     renderRoadmapView();
@@ -1177,6 +1183,225 @@ window.selectProjectAndRedirect = function(projId, tabId) {
   
   const tabBtn = document.getElementById(`tab-${tabId}`);
   if (tabBtn) tabBtn.click();
+};
+
+// ==========================================================================
+// 3.6 PORTFOLIO CALENDAR RENDERING
+// ==========================================================================
+function renderCalendarView() {
+  const titleEl = document.getElementById('calendar-month-year-title');
+  const daysGrid = document.getElementById('calendar-days-grid');
+  if (!titleEl || !daysGrid) return;
+
+  // Set month title (Thai style)
+  const monthName = currentCalendarDate.toLocaleString('th-TH', { month: 'long', year: 'numeric' });
+  titleEl.textContent = monthName;
+
+  // Clear previous grid cells
+  daysGrid.innerHTML = '';
+
+  // Get filter values
+  const assigneeSelect = document.getElementById('calendar-assignee-filter');
+  const projectSelect = document.getElementById('calendar-project-filter');
+  const assigneeFilter = assigneeSelect ? assigneeSelect.value : '';
+  const projectFilter = projectSelect ? projectSelect.value : '';
+
+  // Get calendar date variables
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth(); // 0-indexed
+
+  // First day of month and total days
+  const firstDay = new Date(year, month, 1).getDay(); // Sunday=0, Monday=1, ...
+  const totalDays = new Date(year, month + 1, 0).getDate();
+
+  // Load all issues from local storage
+  const allIssues = JSON.parse(localStorage.getItem('jira_issues') || '[]');
+
+  // Empty cells before first day of month
+  for (let i = 0; i < firstDay; i++) {
+    const emptyCell = document.createElement('div');
+    emptyCell.style.background = '#fcfcfc';
+    emptyCell.style.borderBottom = '1px solid #dfe1e6';
+    emptyCell.style.borderRight = '1px solid #dfe1e6';
+    emptyCell.style.minHeight = '100px';
+    daysGrid.appendChild(emptyCell);
+  }
+
+  // Draw day cells
+  for (let day = 1; day <= totalDays; day++) {
+    const cell = document.createElement('div');
+    cell.style.background = '#fff';
+    cell.style.borderBottom = '1px solid #dfe1e6';
+    cell.style.borderRight = '1px solid #dfe1e6';
+    cell.style.minHeight = '100px';
+    cell.style.padding = '0.3rem';
+    cell.style.display = 'flex';
+    cell.style.flexDirection = 'column';
+    cell.style.gap = '0.2rem';
+    cell.style.position = 'relative';
+
+    // Highlight today
+    const today = new Date();
+    if (today.getDate() === day && today.getMonth() === month && today.getFullYear() === year) {
+      cell.style.background = 'rgba(99, 102, 241, 0.04)';
+      cell.style.border = '2px solid #6366f1';
+    }
+
+    // Day number container
+    const numDiv = document.createElement('div');
+    numDiv.style.fontSize = '0.75rem';
+    numDiv.style.fontWeight = '700';
+    numDiv.style.color = 'var(--color-text-muted)';
+    numDiv.style.textAlign = 'right';
+    numDiv.textContent = day;
+    cell.appendChild(numDiv);
+
+    // Find issues active on this date or ending/due on this date
+    const dayIssues = allIssues.filter(i => {
+      // Filter by assignee
+      if (assigneeFilter && i.assignee !== assigneeFilter) return false;
+      // Filter by project
+      if (projectFilter && i.projectId !== projectFilter) return false;
+
+      // Dates matching logic
+      if (!i.endDate) return false;
+      const startD = i.startDate ? new Date(i.startDate) : null;
+      const endD = new Date(i.endDate);
+
+      // Normalize date objects to midnight for clean comparison
+      const checkDate = new Date(year, month, day);
+      checkDate.setHours(0,0,0,0);
+
+      if (startD) {
+        startD.setHours(0,0,0,0);
+        endD.setHours(0,0,0,0);
+        return checkDate >= startD && checkDate <= endD;
+      } else {
+        endD.setHours(0,0,0,0);
+        return checkDate.getTime() === endD.getTime();
+      }
+    });
+
+    // Draw task pills inside day cell
+    dayIssues.forEach(i => {
+      const proj = projects.find(p => p.id === i.projectId);
+      const projShort = proj ? proj.name.substring(0, 5) : 'Proj';
+
+      let bgColor = 'rgba(99, 102, 241, 0.1)';
+      let textColor = '#6366f1';
+
+      if (i.status === 'Done') {
+        bgColor = 'rgba(16, 185, 129, 0.1)';
+        textColor = '#10b981';
+      } else if (i.status === 'Blocked') {
+        bgColor = 'rgba(239, 68, 68, 0.1)';
+        textColor = '#ef4444';
+      }
+
+      const pill = document.createElement('div');
+      pill.style.fontSize = '0.62rem';
+      pill.style.padding = '0.15rem 0.25rem';
+      pill.style.borderRadius = '3px';
+      pill.style.background = bgColor;
+      pill.style.color = textColor;
+      pill.style.textOverflow = 'ellipsis';
+      pill.style.overflow = 'hidden';
+      pill.style.whiteSpace = 'nowrap';
+      pill.style.cursor = 'pointer';
+      pill.style.fontWeight = '600';
+      pill.title = `${projShort}: ${i.title} (${i.assignee || 'Unassigned'}) - ${i.status}`;
+      pill.innerHTML = `<strong>${escapeHTML(projShort)}</strong>: ${escapeHTML(i.title)}`;
+
+      pill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectProjectAndOpenDrawer(i.projectId, i.id);
+      });
+
+      cell.appendChild(pill);
+    });
+
+    daysGrid.appendChild(cell);
+  }
+
+  // Populate filter dropdowns if empty
+  populateCalendarFilters();
+}
+
+function populateCalendarFilters() {
+  const assigneeSelect = document.getElementById('calendar-assignee-filter');
+  const projectSelect = document.getElementById('calendar-project-filter');
+  if (!assigneeSelect || !projectSelect) return;
+
+  const currentAssigneeVal = assigneeSelect.value;
+  const currentProjectVal = projectSelect.value;
+
+  assigneeSelect.innerHTML = '<option value="">👤 เลือกตาม Tester</option>';
+  mockAssignees.forEach(name => {
+    assigneeSelect.innerHTML += `<option value="${escapeHTML(name)}">${escapeHTML(name)}</option>`;
+  });
+
+  projectSelect.innerHTML = '<option value="">📁 เลือกตามโครงการ</option>';
+  projects.forEach(p => {
+    projectSelect.innerHTML += `<option value="${escapeHTML(p.id)}">${escapeHTML(p.name)}</option>`;
+  });
+
+  assigneeSelect.value = currentAssigneeVal;
+  projectSelect.value = currentProjectVal;
+}
+
+function setupCalendarControls() {
+  const prevBtn = document.getElementById('calendar-prev-month-btn');
+  const nextBtn = document.getElementById('calendar-next-month-btn');
+  const assigneeSelect = document.getElementById('calendar-assignee-filter');
+  const projectSelect = document.getElementById('calendar-project-filter');
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+      renderCalendarView();
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+      renderCalendarView();
+    });
+  }
+
+  if (assigneeSelect) {
+    assigneeSelect.addEventListener('change', () => {
+      renderCalendarView();
+    });
+  }
+
+  if (projectSelect) {
+    projectSelect.addEventListener('change', () => {
+      renderCalendarView();
+    });
+  }
+}
+
+window.selectProjectAndOpenDrawer = function(projId, issueId) {
+  // Select project
+  activeProjectId = projId;
+  localStorage.setItem('jira_active_project_id', projId);
+  const selector = document.getElementById('project-selector');
+  if (selector) selector.value = projId;
+
+  loadAllState();
+
+  // Redirect to active board
+  const tabBoard = document.getElementById('tab-board');
+  if (tabBoard) {
+    tabBoard.click();
+    
+    // Open drawer
+    setTimeout(() => {
+      const issue = issues.find(i => i.id === issueId);
+      if (issue) openDrawer(issue);
+    }, 200);
+  }
 };
 
 window.filterByEpic = function(epicId) {

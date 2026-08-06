@@ -53,6 +53,10 @@
           <i data-lucide="home"></i>
           <span>🏠 Home (หน้าแรกรวม)</span>
         </button>
+        <button class="nav-item" id="tab-calendar">
+          <i data-lucide="calendar"></i>
+          <span>📅 ปฏิทินรวม (Calendar)</span>
+        </button>
         <button class="nav-item" id="tab-roadmap">
           <i data-lucide="calendar-range"></i>
           <span>🗓️ Roadmap (ไทม์ไลน์)</span>
@@ -96,16 +100,16 @@
         <div class="breadcrumbs">
           <span id="breadcrumb-project">โครงการปัจจุบัน</span>
           <span class="divider">/</span>
-          <span id="breadcrumb-view" style="color: #fff; font-weight:600;">Roadmap</span>
+          <span id="breadcrumb-view">Roadmap</span>
         </div>
         
         <div class="header-actions">
           <div class="quick-filters" id="board-quick-filters" style="display:none; gap:0.4rem; align-items:center;">
-            <button class="btn btn-secondary btn-sm" id="filter-blockers" style="background:rgba(239, 68, 68, 0.2); border:1px solid #ef4444; color:#fca5a5;">🔴 Blockers</button>
-            <button class="btn btn-secondary btn-sm" id="filter-ready-qa" style="background:rgba(245, 158, 11, 0.2); border:1px solid #f59e0b; color:#fde68a;">🟡 Ready for QA</button>
+            <button class="btn btn-secondary btn-sm" id="filter-blockers">🔴 Blockers</button>
+            <button class="btn btn-secondary btn-sm" id="filter-ready-qa">🟡 Ready for QA</button>
             <button class="btn btn-secondary btn-sm" id="filter-my-issues">งานของฉัน</button>
             <button class="btn btn-secondary btn-sm" id="filter-due-soon">📅 งานใกล้กำหนด</button>
-            <select id="filter-tester-select" class="btn btn-secondary btn-sm" style="width:auto; padding: 0.25rem 0.5rem; height: 31px; background:#fff; color:#172b4d; border:1px solid #dfe1e6;">
+            <select id="filter-tester-select" class="btn btn-secondary btn-sm" style="width:auto; padding: 0.25rem 0.6rem; height: 32px; background:var(--bg-surface); color:var(--color-text); border:1px solid var(--card-border);">
               <option value="">👤 Tester ทั้งหมด</option>
             </select>
             <button class="btn btn-secondary btn-sm" id="filter-clear">ล้างตัวกรอง</button>
@@ -125,26 +129,26 @@
         </div>
 
         <!-- Portfolio Metrics Cards -->
-        <div class="stats-overview-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
-          <div class="stat-card glassmorphism" style="display:flex; align-items:center; gap:0.8rem; padding:1rem; background:#f4f5f7; border:1px solid #dfe1e6; border-radius:10px;">
-            <div class="stat-icon" style="background:rgba(99, 102, 241, 0.1); color:#6366f1; width:45px; height:45px; display:flex; align-items:center; justify-content:center; border-radius:8px;"><i data-lucide="layers" style="width:22px; height:22px;"></i></div>
+        <div class="stats-overview-grid">
+          <div class="stat-card glassmorphism">
+            <div class="stat-icon" style="background:rgba(79, 70, 229, 0.1); color:#4f46e5;"><i data-lucide="layers" style="width:24px; height:24px;"></i></div>
             <div class="stat-details">
-              <span class="stat-label" style="font-size:0.75rem; color:var(--color-text-muted);">โครงการทั้งหมด</span>
-              <strong id="home-total-projects-count" style="display:block; font-size:1.4rem; font-weight:700; color:var(--color-text);">0</strong>
+              <span class="stat-label">โครงการทั้งหมด</span>
+              <strong id="home-total-projects-count">0</strong>
             </div>
           </div>
-          <div class="stat-card glassmorphism" style="display:flex; align-items:center; gap:0.8rem; padding:1rem; background:#f4f5f7; border:1px solid #dfe1e6; border-radius:10px;">
-            <div class="stat-icon" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; width:45px; height:45px; display:flex; align-items:center; justify-content:center; border-radius:8px;"><i data-lucide="alert-circle" style="width:22px; height:22px;"></i></div>
+          <div class="stat-card glassmorphism">
+            <div class="stat-icon" style="background:rgba(239, 68, 68, 0.1); color:#ef4444;"><i data-lucide="alert-circle" style="width:24px; height:24px;"></i></div>
             <div class="stat-details">
-              <span class="stat-label" style="font-size:0.75rem; color:var(--color-text-muted);">งานที่ติดขัด Blocker (ทุกโครงการ)</span>
-              <strong id="home-total-blocked-count" style="display:block; font-size:1.4rem; font-weight:700; color:var(--color-text);">0</strong>
+              <span class="stat-label">งานที่ติดขัด Blocker (ทุกโครงการ)</span>
+              <strong id="home-total-blocked-count">0</strong>
             </div>
           </div>
-          <div class="stat-card glassmorphism" style="display:flex; align-items:center; gap:0.8rem; padding:1rem; background:#f4f5f7; border:1px solid #dfe1e6; border-radius:10px;">
-            <div class="stat-icon" style="background:rgba(16, 185, 129, 0.1); color:#10b981; width:45px; height:45px; display:flex; align-items:center; justify-content:center; border-radius:8px;"><i data-lucide="check-circle-2" style="width:22px; height:22px;"></i></div>
+          <div class="stat-card glassmorphism">
+            <div class="stat-icon" style="background:rgba(16, 185, 129, 0.1); color:#10b981;"><i data-lucide="check-circle-2" style="width:24px; height:24px;"></i></div>
             <div class="stat-details">
-              <span class="stat-label" style="font-size:0.75rem; color:var(--color-text-muted);">งาน UAT เสร็จสิ้น (Done Pct)</span>
-              <strong id="home-total-done-pct" style="display:block; font-size:1.4rem; font-weight:700; color:var(--color-text);">0%</strong>
+              <span class="stat-label">งาน UAT เสร็จสิ้น (Done Pct)</span>
+              <strong id="home-total-done-pct">0%</strong>
             </div>
           </div>
         </div>
@@ -170,6 +174,48 @@
           <h4 style="font-weight:700; color:var(--color-text); font-size:0.95rem; display:flex; align-items:center; gap:0.4rem; margin-bottom:1.0rem;"><i data-lucide="briefcase" style="width:18px; height:18px; color:#10b981;"></i> สรุปรายชื่อโครงการและความคืบหน้า</h4>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:1rem;" id="home-project-cards-grid">
             <!-- Project cards will be populated here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 0.5: PORTFOLIO CALENDAR -->
+      <section id="view-calendar" class="tab-view">
+        <div class="view-intro">
+          <h3>📅 ปฏิทินแผนงานและเดดไลน์รวม (Portfolio Calendar)</h3>
+          <p>ดูปฏิทินรายเดือนของทุกการ์ดงานและกำหนดส่งงานของ Tester ทุกคนในทุกโครงการร่วมกัน</p>
+        </div>
+        
+        <!-- Calendar Filter Controls -->
+        <div class="calendar-controls glassmorphism" style="display:flex; justify-content:space-between; align-items:center; padding:0.8rem; margin-bottom:1rem; background:#f4f5f7; border:1px solid #dfe1e6; border-radius:8px; gap:1rem; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:0.6rem;">
+            <button class="btn btn-secondary btn-sm" id="calendar-prev-month-btn" style="padding:0.3rem 0.6rem; cursor:pointer;"><i data-lucide="chevron-left" style="width:16px; height:16px;"></i></button>
+            <h4 id="calendar-month-year-title" style="margin:0; font-weight:700; color:var(--color-text); min-width:140px; text-align:center;">สิงหาคม 2569</h4>
+            <button class="btn btn-secondary btn-sm" id="calendar-next-month-btn" style="padding:0.3rem 0.6rem; cursor:pointer;"><i data-lucide="chevron-right" style="width:16px; height:16px;"></i></button>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.6rem;">
+            <select id="calendar-assignee-filter" style="background:#fff; border:1px solid #dfe1e6; color:var(--color-text); padding:0.3rem; font-size:0.8rem; border-radius:4px;">
+              <option value="">👤 เลือกตาม Tester</option>
+            </select>
+            <select id="calendar-project-filter" style="background:#fff; border:1px solid #dfe1e6; color:var(--color-text); padding:0.3rem; font-size:0.8rem; border-radius:4px;">
+              <option value="">📁 เลือกตามโครงการ</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="panel-section glassmorphism" style="padding:1rem; background:#fff; border:1px solid #dfe1e6; border-radius:12px;">
+          <div class="calendar-grid-container" style="display:grid; grid-template-columns: repeat(7, 1fr); border:1px solid #dfe1e6; border-radius:8px; overflow:hidden;">
+            <!-- Week Days -->
+            <div class="calendar-week-day" style="background:#f4f5f7; border-bottom:1px solid #dfe1e6; border-right:1px solid #dfe1e6; text-align:center; padding:0.5rem; font-weight:700; color:var(--color-text); font-size:0.75rem;">อา.</div>
+            <div class="calendar-week-day" style="background:#f4f5f7; border-bottom:1px solid #dfe1e6; border-right:1px solid #dfe1e6; text-align:center; padding:0.5rem; font-weight:700; color:var(--color-text); font-size:0.75rem;">จ.</div>
+            <div class="calendar-week-day" style="background:#f4f5f7; border-bottom:1px solid #dfe1e6; border-right:1px solid #dfe1e6; text-align:center; padding:0.5rem; font-weight:700; color:var(--color-text); font-size:0.75rem;">อ.</div>
+            <div class="calendar-week-day" style="background:#f4f5f7; border-bottom:1px solid #dfe1e6; border-right:1px solid #dfe1e6; text-align:center; padding:0.5rem; font-weight:700; color:var(--color-text); font-size:0.75rem;">พ.</div>
+            <div class="calendar-week-day" style="background:#f4f5f7; border-bottom:1px solid #dfe1e6; border-right:1px solid #dfe1e6; text-align:center; padding:0.5rem; font-weight:700; color:var(--color-text); font-size:0.75rem;">พฤ.</div>
+            <div class="calendar-week-day" style="background:#f4f5f7; border-bottom:1px solid #dfe1e6; border-right:1px solid #dfe1e6; text-align:center; padding:0.5rem; font-weight:700; color:var(--color-text); font-size:0.75rem;">ศ.</div>
+            <div class="calendar-week-day" style="background:#f4f5f7; border-bottom:1px solid #dfe1e6; text-align:center; padding:0.5rem; font-weight:700; color:var(--color-text); font-size:0.75rem;">ส.</div>
+            
+            <!-- Days cells populated dynamically -->
+            <div id="calendar-days-grid" style="display:contents;"></div>
           </div>
         </div>
       </section>
@@ -369,30 +415,30 @@
         </div>
 
         <!-- Project Header Metadata Card -->
-        <div class="summary-project-header-card glassmorphism" style="margin-bottom: 1.2rem; padding: 1.2rem; border-radius: 12px; background:rgba(15,23,42,0.4); border:1px solid var(--glass-border);">
-          <h4 style="margin-bottom:0.8rem; display:flex; align-items:center; gap:0.5rem; color:#3b82f6; font-size:1rem;">
+        <div class="summary-project-header-card glassmorphism" style="margin-bottom: 1.2rem; padding: 1.4rem; border-radius: 14px; background:var(--bg-surface); border:1px solid var(--card-border);">
+          <h4 style="margin-bottom:0.9rem; display:flex; align-items:center; gap:0.5rem; color:var(--primary); font-size:1.05rem; font-weight:700;">
             <i data-lucide="folder-kanban"></i> ข้อมูลภาพรวมโครงการ (Project Metadata)
           </h4>
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.8rem;">
             <div class="form-group" style="margin:0;">
               <label style="font-size:0.75rem; color:var(--color-text-muted);">ชื่อโครงการ (Project Name)</label>
-              <input type="text" id="summary-meta-project" value="Act-Budget" style="padding:0.4rem 0.6rem; font-size:0.85rem; font-weight:700; color:#3b82f6;">
+              <input type="text" id="summary-meta-project" value="Act-Budget" style="padding:0.45rem 0.7rem; font-size:0.85rem; font-weight:700; color:var(--primary);">
             </div>
             <div class="form-group" style="margin:0;">
               <label style="font-size:0.75rem; color:var(--color-text-muted);">รอบการทดสอบ (Test Cycle)</label>
-              <input type="text" id="summary-meta-cycle" value="UAT Phase 1" style="padding:0.4rem 0.6rem; font-size:0.85rem;">
+              <input type="text" id="summary-meta-cycle" value="UAT Phase 1" style="padding:0.45rem 0.7rem; font-size:0.85rem;">
             </div>
             <div class="form-group" style="margin:0;">
               <label style="font-size:0.75rem; color:var(--color-text-muted);">ช่วงเวลา (Timeline Start - End)</label>
-              <input type="text" id="summary-meta-timeline" value="2026-08-01 - 2026-08-31" style="padding:0.4rem 0.6rem; font-size:0.85rem;">
+              <input type="text" id="summary-meta-timeline" value="2026-08-01 - 2026-08-31" style="padding:0.45rem 0.7rem; font-size:0.85rem;">
             </div>
             <div class="form-group" style="margin:0;">
               <label style="font-size:0.75rem; color:var(--color-text-muted);">ผู้จัดการโครงการ (Project Manager)</label>
-              <input type="text" id="summary-meta-pm" value="Varissara Tanboonjit" style="padding:0.4rem 0.6rem; font-size:0.85rem;">
+              <input type="text" id="summary-meta-pm" value="Varissara Tanboonjit" style="padding:0.45rem 0.7rem; font-size:0.85rem;">
             </div>
             <div class="form-group" style="margin:0;">
               <label style="font-size:0.75rem; color:var(--color-text-muted);">จำนวนวันทำงานรวม (Manday)</label>
-              <input type="text" id="summary-meta-manday" value="45 Days" style="padding:0.4rem 0.6rem; font-size:0.85rem;">
+              <input type="text" id="summary-meta-manday" value="45 Days" style="padding:0.45rem 0.7rem; font-size:0.85rem;">
             </div>
           </div>
         </div>
@@ -401,53 +447,53 @@
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.2rem;">
           <div class="db-widget-card" style="padding:1rem; text-align:center;">
             <span style="font-size:0.75rem; color:var(--color-text-muted);">จำนวนเคสทดสอบรวม (Total Execute)</span>
-            <h2 id="kpi-total-execute" style="color:#3b82f6; font-size:1.8rem; margin-top:0.3rem;">221</h2>
+            <h2 id="kpi-total-execute" style="color:var(--primary); font-size:1.8rem; margin-top:0.3rem;">221</h2>
           </div>
           <div class="db-widget-card" style="padding:1rem; text-align:center;">
             <span style="font-size:0.75rem; color:var(--color-text-muted);">ทดสอบผ่านแล้ว (Pass)</span>
-            <h2 id="kpi-passed" style="color:#10b981; font-size:1.8rem; margin-top:0.3rem;">187 <span style="font-size:0.85rem; font-weight:normal;">(75.57%)</span></h2>
+            <h2 id="kpi-passed" style="color:var(--success); font-size:1.8rem; margin-top:0.3rem;">187 <span style="font-size:0.85rem; font-weight:normal;">(75.57%)</span></h2>
           </div>
           <div class="db-widget-card" style="padding:1rem; text-align:center;">
             <span style="font-size:0.75rem; color:var(--color-text-muted);">ยังไม่เริ่มดำเนินการ (Not Start)</span>
-            <h2 id="kpi-not-start" style="color:#f59e0b; font-size:1.8rem; margin-top:0.3rem;">54 <span style="font-size:0.85rem; font-weight:normal;">(24.43%)</span></h2>
+            <h2 id="kpi-not-start" style="color:var(--warning); font-size:1.8rem; margin-top:0.3rem;">54 <span style="font-size:0.85rem; font-weight:normal;">(24.43%)</span></h2>
           </div>
           <div class="db-widget-card" style="padding:1rem; text-align:center;">
             <span style="font-size:0.75rem; color:var(--color-text-muted);">อัตราผ่านรวม (Overall Pass Rate)</span>
-            <h2 id="kpi-pass-rate" style="color:#a855f7; font-size:1.8rem; margin-top:0.3rem;">75.57%</h2>
+            <h2 id="kpi-pass-rate" style="color:#9333ea; font-size:1.8rem; margin-top:0.3rem;">75.57%</h2>
           </div>
         </div>
 
         <!-- Excel-like Test Case Table Container -->
-        <div class="summary-table-container glassmorphism" style="padding:1.2rem; border-radius:12px; overflow-x:auto; background:rgba(15,23,42,0.4); border:1px solid var(--glass-border);">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
-            <h4 style="font-size:0.95rem; font-weight:700; color:#fff; display:flex; align-items:center; gap:0.5rem;">
+        <div class="summary-table-container glassmorphism" style="padding:1.4rem; border-radius:14px; overflow-x:auto; background:var(--bg-surface); border:1px solid var(--card-border);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.9rem;">
+            <h4 style="font-size:0.98rem; font-weight:700; color:var(--color-text); display:flex; align-items:center; gap:0.5rem;">
               <i data-lucide="table"></i> ตารางสรุปผลการทดสอบแยกตามหัวข้อ (Test Case Summary Table - Phase 1)
             </h4>
             <button class="btn btn-secondary btn-sm" id="btn-add-summary-row">
               <i data-lucide="plus"></i> เพิ่มแถวรายการใหม่
             </button>
           </div>
-          <table class="excel-summary-table" style="width:100%; border-collapse:collapse; font-size:0.8rem;">
+          <table class="excel-summary-table" style="width:100%; border-collapse:collapse; font-size:0.82rem;">
             <thead>
-              <tr style="background:rgba(30, 41, 59, 0.9); color:#94a3b8; text-align:left;">
-                <th style="padding:0.6rem; border:1px solid var(--glass-border);">TC ID</th>
-                <th style="padding:0.6rem; border:1px solid var(--glass-border);">Test Case Name</th>
-                <th style="padding:0.6rem; border:1px solid var(--glass-border); width:80px;">Environment</th>
-                <th style="padding:0.6rem; border:1px solid var(--glass-border); width:100px;">Assigned To</th>
-                <th style="padding:0.6rem; border:1px solid var(--glass-border); width:110px;">Status</th>
-                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:90px;">Total Execute</th>
-                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:75px;">Pass</th>
-                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:75px;">Fail</th>
-                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:75px;">Inprogress</th>
-                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:75px;">Not Start</th>
-                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:90px;">Pass Rate (%)</th>
-                <th style="padding:0.6rem; border:1px solid var(--glass-border); text-align:center; width:60px;">จัดการ</th>
+              <tr style="background:var(--bg-surface-secondary); color:var(--color-text-secondary); text-align:left; font-weight:700;">
+                <th style="padding:0.7rem; border:1px solid var(--card-border);">TC ID</th>
+                <th style="padding:0.7rem; border:1px solid var(--card-border);">Test Case Name</th>
+                <th style="padding:0.7rem; border:1px solid var(--card-border); width:85px;">Environment</th>
+                <th style="padding:0.7rem; border:1px solid var(--card-border); width:110px;">Assigned To</th>
+                <th style="padding:0.7rem; border:1px solid var(--card-border); width:110px;">Status</th>
+                <th style="padding:0.7rem; border:1px solid var(--card-border); text-align:center; width:90px;">Total Execute</th>
+                <th style="padding:0.7rem; border:1px solid var(--card-border); text-align:center; width:75px;">Pass</th>
+                <th style="padding:0.7rem; border:1px solid var(--card-border); text-align:center; width:75px;">Fail</th>
+                <th style="padding:0.7rem; border:1px solid var(--card-border); text-align:center; width:75px;">Inprogress</th>
+                <th style="padding:0.7rem; border:1px solid var(--card-border); text-align:center; width:75px;">Not Start</th>
+                <th style="padding:0.7rem; border:1px solid var(--card-border); text-align:center; width:90px;">Pass Rate (%)</th>
+                <th style="padding:0.7rem; border:1px solid var(--card-border); text-align:center; width:60px;">จัดการ</th>
               </tr>
             </thead>
             <tbody id="summary-table-body">
               <!-- Dynamic rows generated by JS -->
             </tbody>
-            <tfoot id="summary-table-foot" style="font-weight:700; background:rgba(15, 23, 42, 0.95); color:#fff;">
+            <tfoot id="summary-table-foot" style="font-weight:700; background:var(--bg-surface-secondary); color:var(--color-text);">
               <!-- Totals calculated by JS -->
             </tfoot>
           </table>
