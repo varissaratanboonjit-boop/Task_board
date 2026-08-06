@@ -1720,7 +1720,7 @@ function renderBlockedTasksSummary() {
   const blockedIssues = issues.filter(i => i.status === 'Blocked');
   if (blockedIssues.length === 0) {
     container.innerHTML = `
-      <div style="grid-column: span 3; text-align:center; padding:1.5rem; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); border-radius:8px;">
+      <div style="grid-column: span 3; text-align:center; padding:1.5rem; background:#f4f5f7; border:1px dashed #dfe1e6; border-radius:8px;">
         <span style="font-size:0.8rem; color:var(--color-text-muted);"><i data-lucide="check-circle" style="width:15px; height:15px; color:#36b37e; vertical-align:middle; margin-right:0.3rem;"></i> ทีมงานกำลังทำงานอย่างราบรื่น ไม่มีงานใดติด Blocker ในเวลานี้</span>
       </div>
     `;
@@ -1741,10 +1741,10 @@ function renderBlockedTasksSummary() {
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <strong style="color:#ff5630; font-size:0.8rem; cursor:pointer;" onclick="openDefectDrawer('${i.id}')">${i.id}</strong>
-        <span style="font-size:0.65rem; color:#cbd5e1; background:rgba(255,255,255,0.1); padding:0.1rem 0.3rem; border-radius:4px;">${i.type}</span>
+        <span style="font-size:0.65rem; color:var(--color-text-muted); background:rgba(0,0,0,0.05); padding:0.1rem 0.3rem; border-radius:4px;">${i.type}</span>
       </div>
-      <h6 style="font-weight:700; color:#fff; margin:0; font-size:0.8rem;">${escapeHTML(i.title)}</h6>
-      <div style="font-size:0.75rem; color:#fca5a5; background:rgba(239, 68, 68, 0.1); border-radius:4px; padding:0.3rem; font-weight:600;">
+      <h6 style="font-weight:700; color:var(--color-text); margin:0; font-size:0.8rem;">${escapeHTML(i.title)}</h6>
+      <div style="font-size:0.75rem; color:#b91c1c; background:rgba(239, 68, 68, 0.08); border-radius:4px; padding:0.3rem; font-weight:600;">
         ⚠️ Blocker: ${escapeHTML(i.blockerReason || 'ไม่ได้ระบุสาเหตุ')}
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:var(--color-text-muted); margin-top:0.2rem;">
@@ -1793,11 +1793,11 @@ function renderStatusDonutChart() {
     #10b981 ${todoPct + ipPct + blockedPct + reviewPct}deg 360deg
   )`;
   container.style.position = 'relative';
-  container.style.boxShadow = '0 0 15px rgba(0,0,0,0.5)';
+  container.style.boxShadow = '0 1px 5px rgba(0,0,0,0.15)';
   
   container.innerHTML = `
-    <div style="position:absolute; width:70px; height:70px; background:#0b1221; border-radius:50%; top:25px; left:25px; display:flex; flex-direction:column; justify-content:center; align-items:center; box-shadow:inset 0 0 10px rgba(0,0,0,0.8);">
-      <span style="font-size:1.1rem; font-weight:700; color:#fff;">${total}</span>
+    <div style="position:absolute; width:70px; height:70px; background:#fff; border:1px solid #dfe1e6; border-radius:50%; top:25px; left:25px; display:flex; flex-direction:column; justify-content:center; align-items:center; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+      <span style="font-size:1.1rem; font-weight:700; color:var(--color-text);">${total}</span>
       <span style="font-size:0.55rem; color:var(--color-text-muted); text-transform:uppercase;">งานทั้งหมด</span>
     </div>
   `;
@@ -1813,12 +1813,12 @@ function renderStatusDonutChart() {
   keys.forEach(k => {
     const pct = total > 0 ? Math.round((k.count / total) * 100) : 0;
     legend.innerHTML += `
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; padding:0.2rem 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; padding:0.2rem 0; border-bottom:1px solid rgba(0,0,0,0.05);">
         <span style="display:flex; align-items:center; gap:0.4rem;">
           <span style="width:7px; height:7px; border-radius:50%; background:${k.color}; display:inline-block;"></span>
           <span style="color:var(--color-text-muted);">${k.label}</span>
         </span>
-        <strong style="color:#fff;">${k.count} (${pct}%)</strong>
+        <strong style="color:var(--color-text);">${k.count} (${pct}%)</strong>
       </div>
     `;
   });
@@ -1855,13 +1855,13 @@ function renderWorkloadBars() {
     container.innerHTML += `
       <div class="workload-bar-row" style="display:flex; align-items:center; gap:0.8rem; margin-bottom:0.4rem;">
         <div style="width:120px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; display:flex; flex-direction:column;">
-          <strong style="color:#cbd5e1; font-size:0.8rem;">${escapeHTML(name)}</strong>
+          <strong style="color:var(--color-text); font-size:0.8rem;">${escapeHTML(name)}</strong>
           ${badge}
         </div>
         <div class="workload-bar-wrapper" style="flex:1; background:#e2e8f0; height:12px; border-radius:6px; overflow:hidden; position:relative;">
           <div class="workload-bar-fill" style="width: ${pct}%; background:${cap === 'overloaded' ? '#ff5630' : '#36b37e'}; height:100%; border-radius:6px; transition:width 0.3s ease;"></div>
         </div>
-        <span style="font-weight:700; color:#fff; text-align:right; width:60px; font-size:0.8rem;">${sp} SP</span>
+        <span style="font-weight:700; color:var(--color-text); text-align:right; width:60px; font-size:0.8rem;">${sp} SP</span>
       </div>
     `;
   });
@@ -1887,12 +1887,12 @@ function renderVelocityHistory() {
     const pct = totalSP > 0 ? (completedSP / totalSP) * 100 : 0;
 
     container.innerHTML += `
-      <div style="font-size:0.75rem; display:flex; flex-direction:column; gap:0.2rem; border-bottom:1px solid rgba(255,255,255,0.03); padding-bottom:0.4rem;">
+      <div style="font-size:0.75rem; display:flex; flex-direction:column; gap:0.2rem; border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:0.4rem;">
         <div style="display:flex; justify-content:space-between;">
-          <strong style="color:#fff;">${escapeHTML(s.name)}</strong>
-          <span>${completedSP} / ${totalSP} SP Completed</span>
+          <strong style="color:var(--color-text);">${escapeHTML(s.name)}</strong>
+          <span style="color:var(--color-text-muted);">${completedSP} / ${totalSP} SP Completed</span>
         </div>
-        <div style="background:rgba(255,255,255,0.03); height:8px; border-radius:4px; overflow:hidden; width:100%;">
+        <div style="background:rgba(0,0,0,0.05); height:8px; border-radius:4px; overflow:hidden; width:100%;">
           <div style="background:#10b981; height:100%; width:${pct}%;"></div>
         </div>
       </div>
@@ -1958,7 +1958,7 @@ function renderBurndownChart() {
     line.setAttribute("y1", y);
     line.setAttribute("x2", width - paddingX);
     line.setAttribute("y2", y);
-    line.setAttribute("stroke", "rgba(255,255,255,0.03)");
+    line.setAttribute("stroke", "rgba(0,0,0,0.06)");
     svg.appendChild(line);
 
     // Label
@@ -1984,7 +1984,7 @@ function renderBurndownChart() {
     line.setAttribute("y1", paddingY);
     line.setAttribute("x2", x);
     line.setAttribute("y2", height - paddingY);
-    line.setAttribute("stroke", "rgba(255,255,255,0.02)");
+    line.setAttribute("stroke", "rgba(0,0,0,0.04)");
     svg.appendChild(line);
 
     // Label
@@ -2619,49 +2619,49 @@ function renderSummaryView() {
     const passRatePct = row.total > 0 ? ((row.pass / row.total) * 100).toFixed(2) : '0.00';
 
     const tr = document.createElement('tr');
-    tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-    tr.style.background = index % 2 === 0 ? 'rgba(15, 23, 42, 0.2)' : 'rgba(30, 41, 59, 0.2)';
+    tr.style.borderBottom = '1px solid #dfe1e6';
+    tr.style.background = index % 2 === 0 ? '#fff' : '#f4f5f7';
 
     tr.innerHTML = `
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border);">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6;">
         <input type="text" value="${escapeHTML(row.id)}" onchange="updateSummaryField(${index}, 'id', this.value)" style="width:100%; background:transparent; border:none; color:#3b82f6; font-weight:600; font-size:0.8rem;">
       </td>
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border);">
-        <input type="text" value="${escapeHTML(row.name)}" onchange="updateSummaryField(${index}, 'name', this.value)" style="width:100%; background:transparent; border:none; color:#fff; font-size:0.8rem;">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6;">
+        <input type="text" value="${escapeHTML(row.name)}" onchange="updateSummaryField(${index}, 'name', this.value)" style="width:100%; background:transparent; border:none; color:var(--color-text); font-size:0.8rem;">
       </td>
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border);">
-        <input type="text" value="${escapeHTML(row.env || 'UAT')}" onchange="updateSummaryField(${index}, 'env', this.value)" style="width:100%; background:transparent; border:none; color:#cbd5e1; font-size:0.8rem;">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6;">
+        <input type="text" value="${escapeHTML(row.env || 'UAT')}" onchange="updateSummaryField(${index}, 'env', this.value)" style="width:100%; background:transparent; border:none; color:var(--color-text-muted); font-size:0.8rem;">
       </td>
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border);">
-        <input type="text" value="${escapeHTML(row.assignedTo || '')}" onchange="updateSummaryField(${index}, 'assignedTo', this.value)" style="width:100%; background:transparent; border:none; color:#cbd5e1; font-size:0.8rem;">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6;">
+        <input type="text" value="${escapeHTML(row.assignedTo || '')}" onchange="updateSummaryField(${index}, 'assignedTo', this.value)" style="width:100%; background:transparent; border:none; color:var(--color-text-muted); font-size:0.8rem;">
       </td>
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border);">
-        <select onchange="updateSummaryField(${index}, 'status', this.value)" style="width:100%; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); color:#fff; padding:0.2rem; font-size:0.75rem; border-radius:4px;">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6;">
+        <select onchange="updateSummaryField(${index}, 'status', this.value)" style="width:100%; background:#fff; border:1px solid #dfe1e6; color:var(--color-text); padding:0.2rem; font-size:0.75rem; border-radius:4px;">
           <option value="Pass" ${row.status === 'Pass' ? 'selected' : ''}>Pass</option>
           <option value="In Progress" ${row.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
           <option value="Not Start" ${row.status === 'Not Start' ? 'selected' : ''}>Not Start</option>
           <option value="Fail" ${row.status === 'Fail' ? 'selected' : ''}>Fail</option>
         </select>
       </td>
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
-        <input type="number" min="0" value="${row.total || 0}" onchange="updateSummaryField(${index}, 'total', parseInt(this.value, 10))" style="width:100%; text-align:center; background:transparent; border:none; color:#fff; font-weight:600; font-size:0.8rem;">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6; text-align:center;">
+        <input type="number" min="0" value="${row.total || 0}" onchange="updateSummaryField(${index}, 'total', parseInt(this.value, 10))" style="width:100%; text-align:center; background:transparent; border:none; color:var(--color-text); font-weight:600; font-size:0.8rem;">
       </td>
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6; text-align:center;">
         <input type="number" min="0" value="${row.pass || 0}" onchange="updateSummaryField(${index}, 'pass', parseInt(this.value, 10))" style="width:100%; text-align:center; background:transparent; border:none; color:#10b981; font-weight:600; font-size:0.8rem;">
       </td>
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6; text-align:center;">
         <input type="number" min="0" value="${row.fail || 0}" onchange="updateSummaryField(${index}, 'fail', parseInt(this.value, 10))" style="width:100%; text-align:center; background:transparent; border:none; color:#ef4444; font-weight:600; font-size:0.8rem;">
       </td>
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6; text-align:center;">
         <input type="number" min="0" value="${row.inprogress || 0}" onchange="updateSummaryField(${index}, 'inprogress', parseInt(this.value, 10))" style="width:100%; text-align:center; background:transparent; border:none; color:#f59e0b; font-weight:600; font-size:0.8rem;">
       </td>
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6; text-align:center;">
         <input type="number" min="0" value="${row.notStart || 0}" onchange="updateSummaryField(${index}, 'notStart', parseInt(this.value, 10))" style="width:100%; text-align:center; background:transparent; border:none; color:#64748b; font-weight:600; font-size:0.8rem;">
       </td>
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center; font-weight:700; color:#a855f7;">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6; text-align:center; font-weight:700; color:#a855f7;">
         ${passRatePct}%
       </td>
-      <td style="padding:0.4rem 0.6rem; border:1px solid var(--glass-border); text-align:center;">
+      <td style="padding:0.4rem 0.6rem; border:1px solid #dfe1e6; text-align:center;">
         <button class="btn btn-defect btn-icon-sm" onclick="deleteSummaryRow(${index})" style="padding:0.2rem 0.35rem; background:#ff5630; border:none; color:#fff;" title="ลบแถว">
           <i data-lucide="trash-2" style="width:12px; height:12px;"></i>
         </button>
