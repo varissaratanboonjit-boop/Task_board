@@ -531,10 +531,43 @@
                 <input type="checkbox" id="sync-enabled-checkbox" style="width:auto; margin:0;">
                 <span>เปิดใช้งานคลาวด์ซิงค์ (Enable Cloud Sync)</span>
               </label>
+              
+              <!-- Room ID & Connect -->
               <div id="sync-config-row" style="display:none; gap:0.6rem; margin-top:0.4rem; align-items:center;">
                 <input type="text" id="sync-room-input" placeholder="ตัวอย่าง: room-budget-qa-2026" style="flex:1; padding:0.4rem; font-size:0.8rem; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:#fff; height:36px;">
                 <button class="btn btn-primary" id="btn-connect-sync" style="padding:0 0.8rem; height:36px; display:flex; align-items:center;">เชื่อมต่อ</button>
               </div>
+
+              <!-- Firebase Keys Config Section Toggle -->
+              <div style="margin-top:0.2rem;">
+                <a href="#" id="toggle-firebase-keys-btn" style="font-size:0.75rem; color:#6366f1; text-decoration:none; display:inline-flex; align-items:center; gap:0.2rem;">
+                  <i data-lucide="settings" style="width:12px; height:12px;"></i> ตั้งค่ากุญแจคลาวด์ (Firebase Configuration Keys)
+                </a>
+              </div>
+
+              <!-- Collapsible Firebase Keys Input Container -->
+              <div id="firebase-keys-container" style="display:none; flex-direction:column; gap:0.4rem; padding:0.6rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:6px; margin-top:0.2rem;">
+                <div style="font-size:0.75rem; color:#ffab00; font-weight:600; margin-bottom:0.2rem;">⚠️ กรุณากรอกรหัส Firebase ของโปรเจกต์คุณเอง:</div>
+                <div class="form-group" style="margin-bottom:0.2rem;">
+                  <label style="font-size:0.7rem; color:#cbd5e1;">Firebase API Key</label>
+                  <input type="text" id="sync-firebase-apikey" placeholder="ป้อน API Key..." style="padding:0.3rem; font-size:0.75rem; height:28px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:#fff; width:100%;">
+                </div>
+                <div class="form-group" style="margin-bottom:0.2rem;">
+                  <label style="font-size:0.7rem; color:#cbd5e1;">Firebase Database URL</label>
+                  <input type="text" id="sync-firebase-dburl" placeholder="ป้อน Realtime Database URL..." style="padding:0.3rem; font-size:0.75rem; height:28px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:#fff; width:100%;">
+                </div>
+                <div class="form-group" style="margin-bottom:0.2rem;">
+                  <label style="font-size:0.7rem; color:#cbd5e1;">Firebase Project ID</label>
+                  <input type="text" id="sync-firebase-projid" placeholder="ป้อน Project ID..." style="padding:0.3rem; font-size:0.75rem; height:28px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:#fff; width:100%;">
+                </div>
+                <div class="form-group" style="margin-bottom:0.4rem;">
+                  <label style="font-size:0.7rem; color:#cbd5e1;">Firebase App ID</label>
+                  <input type="text" id="sync-firebase-appid" placeholder="ป้อน App ID..." style="padding:0.3rem; font-size:0.75rem; height:28px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:#fff; width:100%;">
+                </div>
+                <button class="btn btn-secondary btn-sm" id="btn-save-firebase-keys" style="padding:0.2rem 0.6rem; font-size:0.75rem; align-self:flex-end;">บันทึกรหัสกุญแจ</button>
+              </div>
+
+              <!-- Status Box -->
               <div id="sync-status-box" style="margin-top:0.4rem; font-size:0.75rem; color:var(--color-text-muted); display:none;">
                 สถานะการเชื่อมต่อ: <strong id="sync-status-label" style="color:#ef4444;">🔴 ออฟไลน์</strong>
               </div>

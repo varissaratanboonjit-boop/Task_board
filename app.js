@@ -63,6 +63,33 @@ function initFirebaseSync() {
   // Save room ID to localStorage
   localStorage.setItem('sync_room_id', roomId);
 
+  // Load Custom Firebase config
+  const customApiKey = localStorage.getItem('sync_firebase_apikey');
+  const customDbUrl = localStorage.getItem('sync_firebase_dburl');
+  const customProjId = localStorage.getItem('sync_firebase_projid');
+  const customAppId = localStorage.getItem('sync_firebase_appid');
+
+  if (!customApiKey || !customDbUrl || !customProjId || !customAppId) {
+    if (statusLabel) {
+      statusLabel.innerHTML = "🔴 กรุณาคลิกปุ่ม ⚙️ ตั้งค่ากุญแจคลาวด์ เพื่อกรอก Firebase Config ของตัวเองก่อนเชื่อมต่อ";
+      statusLabel.style.color = "#ef4444";
+    }
+    if (dbRef) {
+      dbRef.off();
+      dbRef = null;
+    }
+    return;
+  }
+
+  const customConfig = {
+    apiKey: customApiKey,
+    authDomain: `${customProjId}.firebaseapp.com`,
+    databaseURL: customDbUrl,
+    projectId: customProjId,
+    storageBucket: `${customProjId}.appspot.com`,
+    appId: customAppId
+  };
+
   if (statusLabel) {
     statusLabel.textContent = "🟡 กำลังเชื่อมต่อ...";
     statusLabel.style.color = "#ffe68a";
@@ -72,68 +99,77 @@ function initFirebaseSync() {
     if (typeof firebase === 'undefined') {
       throw new Error("ระบบ Firebase ยังโหลดไม่เสร็จสมบูรณ์");
     }
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+
+    if (firebase.apps.length) {
+      Promise.all(firebase.apps.map(app => app.delete())).then(() => {
+        firebase.initializeApp(customConfig);
+        connectToRef();
+      });
+    } else {
+      firebase.initializeApp(customConfig);
+      connectToRef();
     }
 
-    if (dbRef) {
-      dbRef.off();
+    function connectToRef() {
+      if (dbRef) {
+        dbRef.off();
+      }
+
+      dbRef = firebase.database().ref(`rooms/${roomId}`);
+
+      // Listen to value updates
+      dbRef.on('value', (snapshot) => {
+        const val = snapshot.val();
+        if (val) {
+          isRemoteUpdate = true;
+          
+          if (val.projects) {
+            projects = val.projects;
+            localStorage.setItem('jira_projects', JSON.stringify(projects));
+          }
+          if (val.epics) {
+            localStorage.setItem('jira_epics', JSON.stringify(val.epics));
+          }
+          if (val.sprints) {
+            localStorage.setItem('jira_sprints', JSON.stringify(val.sprints));
+          }
+          if (val.issues) {
+            localStorage.setItem('jira_issues', JSON.stringify(val.issues));
+          }
+          if (val.comments) {
+            comments = val.comments;
+            localStorage.setItem('jira_comments', JSON.stringify(comments));
+          }
+          if (val.summaryData) {
+            summaryData = val.summaryData;
+            localStorage.setItem('jira_summary_data', JSON.stringify(summaryData));
+          }
+
+          // Reload data from local storage
+          loadAllState();
+          renderActiveTab();
+
+          isRemoteUpdate = false;
+
+          if (statusLabel) {
+            statusLabel.innerHTML = `🟢 เชื่อมต่อสำเร็จ (ห้อง: <span style="color:#6366f1; font-weight:700;">${escapeHTML(roomId)}</span>)`;
+            statusLabel.style.color = "#10b981";
+          }
+        } else {
+          // First connection to this room: upload current state
+          pushLocalStateToCloud();
+          if (statusLabel) {
+            statusLabel.innerHTML = `🟢 สร้างห้องใหม่สำเร็จ (ห้อง: <span style="color:#6366f1; font-weight:700;">${escapeHTML(roomId)}</span>)`;
+            statusLabel.style.color = "#10b981";
+          }
+        }
+      }, (err) => {
+        if (statusLabel) {
+          statusLabel.textContent = `🔴 เชื่อมต่อล้มเหลว: ${err.message}`;
+          statusLabel.style.color = "#ef4444";
+        }
+      });
     }
-
-    dbRef = firebase.database().ref(`rooms/${roomId}`);
-
-    // Listen to value updates
-    dbRef.on('value', (snapshot) => {
-      const val = snapshot.val();
-      if (val) {
-        isRemoteUpdate = true;
-        
-        if (val.projects) {
-          projects = val.projects;
-          localStorage.setItem('jira_projects', JSON.stringify(projects));
-        }
-        if (val.epics) {
-          localStorage.setItem('jira_epics', JSON.stringify(val.epics));
-        }
-        if (val.sprints) {
-          localStorage.setItem('jira_sprints', JSON.stringify(val.sprints));
-        }
-        if (val.issues) {
-          localStorage.setItem('jira_issues', JSON.stringify(val.issues));
-        }
-        if (val.comments) {
-          comments = val.comments;
-          localStorage.setItem('jira_comments', JSON.stringify(comments));
-        }
-        if (val.summaryData) {
-          summaryData = val.summaryData;
-          localStorage.setItem('jira_summary_data', JSON.stringify(summaryData));
-        }
-
-        // Reload data from local storage
-        loadAllState();
-        renderActiveTab();
-
-        isRemoteUpdate = false;
-
-        if (statusLabel) {
-          statusLabel.innerHTML = `🟢 เชื่อมต่อสำเร็จ (ห้อง: <span style="color:#6366f1; font-weight:700;">${escapeHTML(roomId)}</span>)`;
-          statusLabel.style.color = "#10b981";
-        }
-      } else {
-        // First connection to this room: upload current state
-        pushLocalStateToCloud();
-        if (statusLabel) {
-          statusLabel.innerHTML = `🟢 สร้างห้องใหม่สำเร็จ (ห้อง: <span style="color:#6366f1; font-weight:700;">${escapeHTML(roomId)}</span>)`;
-          statusLabel.style.color = "#10b981";
-        }
-      }
-    }, (err) => {
-      if (statusLabel) {
-        statusLabel.textContent = `🔴 เชื่อมต่อล้มเหลว: ${err.message}`;
-        statusLabel.style.color = "#ef4444";
-      }
-    });
 
   } catch (err) {
     if (statusLabel) {
@@ -728,14 +764,30 @@ function setupSettingsControls() {
   const syncCheckbox = document.getElementById('sync-enabled-checkbox');
   const syncRoomInput = document.getElementById('sync-room-input');
   const btnConnectSync = document.getElementById('btn-connect-sync');
+  
+  const toggleKeysBtn = document.getElementById('toggle-firebase-keys-btn');
+  const keysContainer = document.getElementById('firebase-keys-container');
+  const btnSaveKeys = document.getElementById('btn-save-firebase-keys');
+
+  // Input Fields
+  const apikeyInput = document.getElementById('sync-firebase-apikey');
+  const dburlInput = document.getElementById('sync-firebase-dburl');
+  const projidInput = document.getElementById('sync-firebase-projid');
+  const appidInput = document.getElementById('sync-firebase-appid');
 
   if (syncCheckbox) {
-    // Load from localStorage
+    // Load saved settings
     const savedEnabled = localStorage.getItem('sync_enabled') === 'true';
     const savedRoomId = localStorage.getItem('sync_room_id') || '';
 
     syncCheckbox.checked = savedEnabled;
     if (syncRoomInput) syncRoomInput.value = savedRoomId;
+
+    // Load saved Firebase keys
+    if (apikeyInput) apikeyInput.value = localStorage.getItem('sync_firebase_apikey') || '';
+    if (dburlInput) dburlInput.value = localStorage.getItem('sync_firebase_dburl') || '';
+    if (projidInput) projidInput.value = localStorage.getItem('sync_firebase_projid') || '';
+    if (appidInput) appidInput.value = localStorage.getItem('sync_firebase_appid') || '';
 
     // Trigger initial state
     if (savedEnabled) {
@@ -750,6 +802,25 @@ function setupSettingsControls() {
 
     if (btnConnectSync) {
       btnConnectSync.addEventListener('click', () => {
+        initFirebaseSync();
+      });
+    }
+
+    if (toggleKeysBtn && keysContainer) {
+      toggleKeysBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const isHidden = keysContainer.style.display === 'none';
+        keysContainer.style.display = isHidden ? 'flex' : 'none';
+      });
+    }
+
+    if (btnSaveKeys) {
+      btnSaveKeys.addEventListener('click', () => {
+        localStorage.setItem('sync_firebase_apikey', (apikeyInput ? apikeyInput.value.trim() : ''));
+        localStorage.setItem('sync_firebase_dburl', (dburlInput ? dburlInput.value.trim() : ''));
+        localStorage.setItem('sync_firebase_projid', (projidInput ? projidInput.value.trim() : ''));
+        localStorage.setItem('sync_firebase_appid', (appidInput ? appidInput.value.trim() : ''));
+        alert("บันทึกกุญแจคลาวด์ Firebase สำเร็จ!");
         initFirebaseSync();
       });
     }
