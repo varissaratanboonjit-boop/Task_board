@@ -9,13 +9,12 @@ let summaryData = [];
 
 // Firebase Real-time Sync Configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAsaD3_placeholder_key_for_user_convenience",
-  authDomain: "quantum-jira-testing.firebaseapp.com",
-  databaseURL: "https://quantum-jira-testing-default-rtdb.firebaseio.com",
-  projectId: "quantum-jira-testing",
-  storageBucket: "quantum-jira-testing.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abc123xyz"
+  apiKey: "AIzaSyB3o3JupXVMgbcggltstEQhzY_X5EWuYfg",
+  authDomain: "tester-taskboard.firebaseapp.com",
+  databaseURL: "https://tester-taskboard-default-rtdb.firebaseio.com",
+  projectId: "tester-taskboard",
+  storageBucket: "tester-taskboard.appspot.com",
+  appId: "1:14606292268:web:5b1b57fff8c7f370b50f89"
 };
 let dbRef = null;
 let isRemoteUpdate = false;
@@ -64,21 +63,17 @@ function initFirebaseSync() {
   localStorage.setItem('sync_room_id', roomId);
 
   // Load Custom Firebase config
-  const customApiKey = localStorage.getItem('sync_firebase_apikey');
-  const customDbUrl = localStorage.getItem('sync_firebase_dburl');
-  const customProjId = localStorage.getItem('sync_firebase_projid');
-  const customAppId = localStorage.getItem('sync_firebase_appid');
+  let customApiKey = localStorage.getItem('sync_firebase_apikey');
+  let customDbUrl = localStorage.getItem('sync_firebase_dburl');
+  let customProjId = localStorage.getItem('sync_firebase_projid');
+  let customAppId = localStorage.getItem('sync_firebase_appid');
 
   if (!customApiKey || !customDbUrl || !customProjId || !customAppId) {
-    if (statusLabel) {
-      statusLabel.innerHTML = "🔴 กรุณาคลิกปุ่ม ⚙️ ตั้งค่ากุญแจคลาวด์ เพื่อกรอก Firebase Config ของตัวเองก่อนเชื่อมต่อ";
-      statusLabel.style.color = "#ef4444";
-    }
-    if (dbRef) {
-      dbRef.off();
-      dbRef = null;
-    }
-    return;
+    // Fall back to default hardcoded config (useful for teammates opening the link)
+    customApiKey = firebaseConfig.apiKey;
+    customDbUrl = firebaseConfig.databaseURL;
+    customProjId = firebaseConfig.projectId;
+    customAppId = firebaseConfig.appId;
   }
 
   const customConfig = {
@@ -198,7 +193,7 @@ function pushLocalStateToCloud() {
 }
 
 // Active View Tab State
-let activeTab = 'roadmap';
+let activeTab = 'home';
 let activeEpicFilter = null; // Filter board/backlog by Epic
 let activeIssueForDrawer = null;
 
@@ -462,6 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Sidebar navigation switcher
 function setupSidebarNavigation() {
   const tabs = {
+    'tab-home': 'home',
     'tab-roadmap': 'roadmap',
     'tab-backlog': 'backlog',
     'tab-board': 'board',
@@ -504,7 +500,10 @@ function renderActiveTab() {
   }
 
   // Show active view & render
-  if (activeTab === 'roadmap') {
+  if (activeTab === 'home') {
+    document.getElementById('view-home').classList.add('active');
+    renderHomeView();
+  } else if (activeTab === 'roadmap') {
     document.getElementById('view-roadmap').classList.add('active');
     renderRoadmapView();
   } else if (activeTab === 'backlog') {
@@ -979,6 +978,206 @@ function renderRoadmapView() {
     rowsContainer.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--color-text-muted);">ยังไม่มีรายการแผนงานในโครงการนี้</div>';
   }
 }
+
+// ==========================================================================
+// 3.5 HOME PORTFOLIO VIEW RENDERING
+// ==========================================================================
+function renderHomeView() {
+  const totalProj = projects.length;
+  const countEl = document.getElementById('home-total-projects-count');
+  if (countEl) countEl.textContent = totalProj;
+
+  const allIssues = JSON.parse(localStorage.getItem('jira_issues') || '[]');
+  const blockedCount = allIssues.filter(i => i.status === 'Blocked').length;
+  const blockedEl = document.getElementById('home-total-blocked-count');
+  if (blockedEl) blockedEl.textContent = blockedCount;
+
+  const doneIssuesCount = allIssues.filter(i => i.status === 'Done').length;
+  const totalIssuesCount = allIssues.length;
+  const donePct = totalIssuesCount > 0 ? Math.round((doneIssuesCount / totalIssuesCount) * 100) : 0;
+  const doneEl = document.getElementById('home-total-done-pct');
+  if (doneEl) doneEl.textContent = `${donePct}%`;
+
+  renderGlobalRoadmap();
+  renderHomeProjectCards();
+}
+
+function renderGlobalRoadmap() {
+  const headerMonths = document.getElementById('home-roadmap-timeline-header-months');
+  const rowsContainer = document.getElementById('home-roadmap-rows-container');
+  if (!headerMonths || !rowsContainer) return;
+
+  headerMonths.innerHTML = '<div class="month-col" style="border-left:none;">แผนงานพอร์ตโฟลิโอ (Portfolio Plan)</div>';
+  rowsContainer.innerHTML = '';
+
+  const months = [];
+  const currDate = new Date();
+  currDate.setDate(1);
+  currDate.setMonth(currDate.getMonth() - 2);
+  
+  for (let i = 0; i < 5; i++) {
+    months.push(new Date(currDate));
+    currDate.setMonth(currDate.getMonth() + 1);
+  }
+
+  months.forEach(m => {
+    const monthLabel = m.toLocaleString('th-TH', { month: 'short', year: 'numeric' });
+    headerMonths.innerHTML += `<div class="month-col" style="grid-column: span 2;">${monthLabel}</div>`;
+  });
+
+  const timelineStartDate = new Date(months[0]);
+  const timelineEndDate = new Date(months[months.length - 1]);
+  timelineEndDate.setMonth(timelineEndDate.getMonth() + 1);
+  timelineEndDate.setDate(timelineEndDate.getDate() - 1);
+  const totalDays = Math.round((timelineEndDate - timelineStartDate) / (1000 * 60 * 60 * 24));
+
+  function getPositionPct(startStr, endStr) {
+    const start = new Date(startStr || formatDateOffset(0));
+    const end = new Date(endStr || formatDateOffset(1));
+    let offsetDays = Math.round((start - timelineStartDate) / (1000 * 60 * 60 * 24));
+    let durationDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
+    if (offsetDays < 0) { durationDays += offsetDays; offsetDays = 0; }
+    if (offsetDays > totalDays) return null;
+    if (offsetDays + durationDays > totalDays) durationDays = totalDays - offsetDays;
+    if (durationDays <= 0) durationDays = 1;
+    return { left: (offsetDays / totalDays) * 100, width: (durationDays / totalDays) * 100 };
+  }
+
+  const allEpics = JSON.parse(localStorage.getItem('jira_epics') || '[]');
+  const allSprints = JSON.parse(localStorage.getItem('jira_sprints') || '[]');
+
+  projects.forEach(p => {
+    // Project Row Header
+    const projRow = document.createElement('div');
+    projRow.className = 'roadmap-row';
+    projRow.style.background = 'rgba(99, 102, 241, 0.05)';
+    projRow.style.borderLeft = '4px solid #6366f1';
+    projRow.innerHTML = `
+      <div class="roadmap-row-label" style="font-weight:700; color:#fff; font-size:0.8rem;">
+        <i data-lucide="briefcase" style="width:14px; height:14px; color:#6366f1; margin-right:0.3rem; vertical-align:middle;"></i>
+        <span>${escapeHTML(p.name)}</span>
+      </div>
+      <div class="roadmap-timeline-cells"></div>
+    `;
+    rowsContainer.appendChild(projRow);
+
+    // Epics for this project
+    const pEpics = allEpics.filter(e => e.projectId === p.id);
+    pEpics.forEach(ep => {
+      const pos = getPositionPct(ep.startDate, ep.endDate);
+      const row = document.createElement('div');
+      row.className = 'roadmap-row';
+      let barHtml = '';
+      if (pos) {
+        barHtml = `<div class="roadmap-bar epic-bar" style="left: calc(${pos.left}% + 10px); width: calc(${pos.width}% - 20px); background:linear-gradient(90deg, ${ep.color || '#3b82f6'}, rgba(99, 102, 241, 0.5));" onclick="selectProjectAndRedirect('${p.id}', 'roadmap')">⚡ Epic: ${escapeHTML(ep.name)}</div>`;
+      }
+      row.innerHTML = `
+        <div class="roadmap-row-label" style="padding-left:1.5rem; font-size:0.75rem;">
+          <span class="epic-color-dot" style="background:${ep.color || '#3b82f6'};"></span>
+          <span>${escapeHTML(ep.name)}</span>
+        </div>
+        <div class="roadmap-timeline-cells">${barHtml}</div>
+      `;
+      rowsContainer.appendChild(row);
+    });
+
+    // Sprints for this project
+    const pSprints = allSprints.filter(s => s.projectId === p.id);
+    pSprints.forEach(sp => {
+      const pos = getPositionPct(sp.startDate, sp.endDate);
+      const row = document.createElement('div');
+      row.className = 'roadmap-row';
+      let barHtml = '';
+      if (pos) {
+        barHtml = `<div class="roadmap-bar sprint-bar" style="left: calc(${pos.left}% + 10px); width: calc(${pos.width}% - 20px);" onclick="selectProjectAndRedirect('${p.id}', 'board')">🏃 Sprint: ${escapeHTML(sp.name)}</div>`;
+      }
+      row.innerHTML = `
+        <div class="roadmap-row-label" style="padding-left:1.5rem; font-size:0.75rem;">
+          <i data-lucide="refresh-cw" style="width:12px; height:12px; color:#3b82f6; margin-right:0.3rem; vertical-align:middle;"></i>
+          <span>${escapeHTML(sp.name)}</span>
+        </div>
+        <div class="roadmap-timeline-cells">${barHtml}</div>
+      `;
+      rowsContainer.appendChild(row);
+    });
+  });
+
+  if (projects.length === 0) {
+    rowsContainer.innerHTML = '<div style="text-align:center; padding:3rem; color:var(--color-text-muted);">ยังไม่มีโครงการในระบบ</div>';
+  }
+}
+
+function renderHomeProjectCards() {
+  const container = document.getElementById('home-project-cards-grid');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const allIssues = JSON.parse(localStorage.getItem('jira_issues') || '[]');
+  const allSprints = JSON.parse(localStorage.getItem('jira_sprints') || '[]');
+
+  projects.forEach(p => {
+    const pIssues = allIssues.filter(i => i.projectId === p.id);
+    const totalCount = pIssues.length;
+    const doneCount = pIssues.filter(i => i.status === 'Done').length;
+    const blockedCount = pIssues.filter(i => i.status === 'Blocked').length;
+    const progress = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
+    const activeSprint = allSprints.find(s => s.projectId === p.id && s.status === 'active');
+    const sprintText = activeSprint ? `🏃 Active: ${activeSprint.name}` : '⚪ ไม่มี Active Sprint';
+
+    const card = document.createElement('div');
+    card.className = 'glassmorphism';
+    card.style.padding = '1rem';
+    card.style.borderRadius = '10px';
+    card.style.border = '1px solid rgba(255,255,255,0.06)';
+    card.style.background = 'rgba(255,255,255,0.02)';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.gap = '0.5rem';
+
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <h5 style="margin:0; font-weight:700; color:#fff; font-size:0.85rem; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:200px;" title="${escapeHTML(p.name)}">${escapeHTML(p.name)}</h5>
+        <span style="font-size:0.65rem; color:#6366f1; background:rgba(99, 102, 241, 0.1); padding:0.15rem 0.4rem; border-radius:4px; font-weight:700;">ID: ${p.id}</span>
+      </div>
+      
+      <div style="font-size:0.75rem; color:var(--color-text-muted);">
+        <span>ความก้าวหน้าโครงการ: ${progress}%</span>
+        <div style="background:rgba(255,255,255,0.1); height:8px; border-radius:4px; overflow:hidden; margin-top:0.25rem;">
+          <div style="background:#10b981; width:${progress}%; height:100%; border-radius:4px;"></div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--color-text-muted); margin-top:0.2rem;">
+        <span>${sprintText}</span>
+        <span style="color:#ef4444; font-weight:600;">⚠️ ติดขัด: ${blockedCount} ใบ</span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--color-text-muted);">
+        <span>เสร็จสิ้น: <strong>${doneCount}/${totalCount} ใบ</strong></span>
+      </div>
+
+      <div style="display:flex; gap:0.4rem; margin-top:0.4rem;">
+        <button class="btn btn-secondary btn-sm" onclick="selectProjectAndRedirect('${p.id}', 'roadmap')" style="flex:1; font-size:0.7rem; padding:0.3rem 0.5rem; border:1px solid rgba(255,255,255,0.1); background:transparent; color:#fff; cursor:pointer; border-radius:4px;">แผนงาน (Roadmap)</button>
+        <button class="btn btn-primary btn-sm" onclick="selectProjectAndRedirect('${p.id}', 'board')" style="flex:1; font-size:0.7rem; padding:0.3rem 0.5rem; border:none; background:#3b82f6; color:#fff; cursor:pointer; border-radius:4px;">บอร์ดคัมบัง</button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+window.selectProjectAndRedirect = function(projId, tabId) {
+  activeProjectId = projId;
+  localStorage.setItem('jira_active_project_id', projId);
+  
+  const selector = document.getElementById('project-selector');
+  if (selector) selector.value = projId;
+
+  loadAllState();
+  
+  const tabBtn = document.getElementById(`tab-${tabId}`);
+  if (tabBtn) tabBtn.click();
+};
 
 window.filterByEpic = function(epicId) {
   activeEpicFilter = epicId;
