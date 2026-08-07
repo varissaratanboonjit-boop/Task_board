@@ -1,4 +1,4 @@
-// Quantum Jira-like Dashboard Manager - State & Logic
+// Tester Task Manager - State & Logic
 let projects = [];
 let activeProjectId = '';
 let epics = [];
@@ -878,7 +878,7 @@ function setupSettingsControls() {
           localStorage.setItem('jira_comments', JSON.stringify(data.comments || {}));
           if (data.activeProjId) localStorage.setItem('jira_active_project_id', data.activeProjId);
 
-          alert("นำเข้าข้อมูลสำรอง Quantum Jira สำเร็จ!");
+          alert("นำเข้าข้อมูลสำรอง Tester Task Manager สำเร็จ!");
           window.location.reload();
         } else {
           alert("ไฟล์สแนปช็อต JSON ข้อมูลไม่ถูกต้อง!");
